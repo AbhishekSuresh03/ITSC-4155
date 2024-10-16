@@ -9,7 +9,7 @@ import java.util.UUID;
 import org.mindrot.jbcrypt.BCrypt;
 
 @Service
-public class TaskService {
+public class UserService {
     @Autowired
     private UserRepository userRepository;
 
