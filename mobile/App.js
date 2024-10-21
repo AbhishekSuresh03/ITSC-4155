@@ -40,7 +40,7 @@ function MainTabNavigator(){
       <Tab.Screen name="Explore" component={ExploreScreen} options= {{ title: 'Explore' }}/>
       <Tab.Screen name="Start Trail" component={StartTrailStackScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Saved" component={SavedScreen} options= {{ title: 'Saved' }}/>
-      <Tab.Screen name="Profile" component={ProfileScreen} options= {{ title: 'Profile' }}/>
+      <Tab.Screen name="Profile" component={ProfileScreen} options= {{ title: 'Profile', headerShown: false} }/>
     </Tab.Navigator>
     )
 }
