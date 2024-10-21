@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "react-native-bootstrap-styles": "^4.5.0-r",
+    "react-native-elements": "^3.4.3",
+    "react-native-vector-icons": "^10.2.0"
+  }
+}
