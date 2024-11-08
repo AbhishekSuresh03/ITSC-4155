@@ -16,7 +16,6 @@ const Stack = createStackNavigator();
 //creating an instance of a bottom tab navigator for navigating within the app
 const Tab = createBottomTabNavigator();
 
-
 /*Navigation container is high level routing for the whole app, it has nested navigators within it
 first page user sees is login, can switch to create account from there
 after log in / create account, user is directed to main tab nav which is the actual app, defined after app function
