@@ -1,9 +1,54 @@
-import React, { act } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function ProfileScreen(){
-    return(
-        <View>
+  const [activeTab, setActiveTab] = useState('Feed');
+  
+
+  const renderContent = () => {
+      switch (activeTab) {
+          case 'Feed':
+              return( 
+              <View style={styles.contentContainer}>
+                  <Text style={styles.contentText}>Nothing from feed to currently display!</Text>
+                  <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+              </View>
+              );
+          case 'Photos':
+              return (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No photos to currently display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+              </View>
+              );
+          case 'Reviews':
+              return (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No reviews to currently display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+              </View>
+              );
+          case 'Activities':
+              return (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No activities to display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+              </View>
+              );
+          case 'Completed':
+              return (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No completed trails to display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+              </View>
+              );
+              default:
+                return null;
+      }
+  };
+  
+  return(
+    <ScrollView style={styles.container}>
           <Image source={require('../assets/default-user-profile-pic.jpg')} style={styles.profilePicture} />
           <View style={styles.nameContainer}>
             <Text style={styles.name}> John Doe </Text>
@@ -37,11 +82,31 @@ export default function ProfileScreen(){
 
           </View>
 
+        <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
+          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
+            <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
+            <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
+            <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
+            <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
+          </TouchableOpacity>    
+          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
+            <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
+          </TouchableOpacity>
+        </ScrollView>
+        
 
-
-        </View>
-    )
-};
+            <View style={styles.bottomHalf}>
+                {renderContent()}
+            </View>
+            </ScrollView>
+    );
+}
 
 const styles = StyleSheet.create({
   profilePicture: {
@@ -136,6 +201,68 @@ const styles = StyleSheet.create({
   },
   mileNum: {
     fontSize: 55
-  }
+  }, 
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+},
+topHalf: {
+    padding: 16,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+},
+profileHeaderText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+},
+  navbar: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    height: 50,
+},
+navItem: {
+    marginHorizontal: 20,
+    justifyContent: "center"
+},
+navText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+},
+activeNavText: {
+    color: '#FFC107',
+},
+activeNavItem: {
+    borderBottomWidth: 2,
+    borderBottomColor: 'black'
+},
+bottomHalf: {
+    flex: 1,
+    padding: 16,
+},
+contentText: {
+    fontSize: 18,
+    marginBottom: 20,
+},
+emptyPicture: {
+  height: 175,
+  width: 200,
+  borderRadius: 50
+},
+contentContainer: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center'
+}
 
-})
+});
