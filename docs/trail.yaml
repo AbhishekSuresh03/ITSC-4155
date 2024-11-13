@@ -1,0 +1,123 @@
+openapi: 3.0.0
+info:
+  title: TrailBlazer API
+  version: 1.0.0
+paths:
+  /trails:
+    get:
+      summary: Get all trails
+      tags:
+        - Trails
+      responses:
+        '200':
+          description: A list of trails
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trail'
+    post:
+      summary: Create a new trail
+      tags:
+        - Trails
+      requestBody:
+        description: Trail object that needs to be added
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Trail'
+      responses:
+        '200':
+          description: The created trail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trail'
+  /trails/{id}:
+    get:
+      summary: Get a trail by ID
+      tags:
+        - Trails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A trail object
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trail'
+    put:
+      summary: Update a trail by ID
+      tags:
+        - Trails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Trail object that needs to be updated
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Trail'
+      responses:
+        '200':
+          description: The updated trail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trail'
+    delete:
+      summary: Delete a trail by ID
+      tags:
+        - Trails
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No content
+components:
+  schemas:
+    Trail:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        rating:
+          type: number
+        difficulty:
+          type: string
+        length:
+          type: number
+        time:
+          type: string
+        pace:
+          type: string
+        profilePic:
+          type: string
+        userName:
+          type: string
+        date:
+          type: string
+        description:
+          type: string
