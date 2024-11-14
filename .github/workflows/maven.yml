@@ -18,7 +18,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    env:
+      SPRING_DATA_MONGODB_URI: ${{ secrets.SPRING_DATA_MONGODB_URI }}
+      SPRING_DATA_MONGODB_DATABASE: ${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
+      
     steps:
     - uses: actions/checkout@v4
     - name: Set up JDK 22
