@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "Users")
+@Document(collection = "Trail")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
+public class Trail {
 
     @Id
     private ObjectId _id;
