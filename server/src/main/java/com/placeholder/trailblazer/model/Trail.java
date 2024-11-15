@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
+
 @Document(collection = "Trail")
 @Data
 @AllArgsConstructor
@@ -13,7 +15,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Trail {
 
     @Id
-    private ObjectId _id;
+    private String id;
     private String name;
     private String city;
     private String state;
@@ -23,7 +25,7 @@ public class Trail {
     private int time;
     private int pace;
     private String profilePic;
-    private String userName;
+    private String username;
     private Date date;
     private String description;
 }

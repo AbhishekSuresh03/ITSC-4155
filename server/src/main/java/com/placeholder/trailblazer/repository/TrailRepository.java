@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
 public interface TrailRepository extends MongoRepository<Trail, String> {
-    Trail findByUserId(String id);
+    Trail findByUsername(String username);
 }

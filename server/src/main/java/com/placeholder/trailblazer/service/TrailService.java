@@ -1,4 +1,5 @@
 package com.placeholder.trailblazer.service;
+import com.placeholder.trailblazer.model.Trail;
 import com.placeholder.trailblazer.model.User;
 import com.placeholder.trailblazer.repository.TrailRepository;
 import com.placeholder.trailblazer.service.exceptions.ObjectNotFoundException;
@@ -23,15 +24,15 @@ public class TrailService {
     }
 
     //READ METHODS
-    public User findTrailById(String id) {
+    public Trail findTrailById(String id) {
         return trailRepository.findById(id).orElseThrow(
                 () -> new ObjectNotFoundException("Object not found! Id: " + id + ", Type: " + Trail.class.getName()));
     }
 
-    public Trail findTrailByUserId(String id) {
-        Trail trail = trailRepository.findByUserId(id);
+    public Trail findTrailByUsername(String username) {
+        Trail trail = trailRepository.findByUsername(username);
         if (trail == null) {
-            throw new ObjectNotFoundException("Object not found! User Id: " + id + ", Type: " + Trail.class.getName());
+            throw new ObjectNotFoundException("Object not found! Username: " + username + ", Type: " + Trail.class.getName());
         }
         return trail;
     }
@@ -63,7 +64,7 @@ public class TrailService {
         trl.setTime(trail.getTime());
         trl.setPace(trail.getPace());
         trl.setProfilePic(trail.getProfilePic());
-        trl.setUserName(trail.getUserName());
+        trl.setUsername(trail.getUsername());
         trl.setDate(trail.getDate());
         trl.setDescription(trail.getDescription());
     }
