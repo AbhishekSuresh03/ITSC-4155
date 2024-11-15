@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
-@Document(collection = "Trail")
+@Document(collection = "Trails")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
