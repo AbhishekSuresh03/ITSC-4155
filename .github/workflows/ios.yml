@@ -11,11 +11,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        working-directory: ./mobile
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.10.0
           cache: npm
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
         working-directory: ./mobile
