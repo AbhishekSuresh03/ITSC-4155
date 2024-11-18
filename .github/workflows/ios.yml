@@ -3,24 +3,29 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [ "main", "develop" ]
+
 jobs:
   build:
     name: Install and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Setup Node.js
-      - uses: actions/setup-node@v4
+        uses: actions/setup-node@v4
         with:
           node-version: 22.10.0
           cache: npm
           cache-dependency-path: '**/package-lock.json'
+      
       - name: Setup Expo and EAS
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@v7
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+      
       - name: Install dependencies
         run: npm ci
+      
       - name: Build on EAS
         run: eas build --platform all --non-interactive --no-wait
