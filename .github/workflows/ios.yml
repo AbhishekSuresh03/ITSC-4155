@@ -1,0 +1,25 @@
+name: Validate iOS Build
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validate:
+    runs-on: macos-latest  # macOS required for iOS builds
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.10.0
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Validate iOS build
+        run: eas build --platform ios --profile preview --local
