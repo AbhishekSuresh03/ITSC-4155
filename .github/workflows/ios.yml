@@ -9,21 +9,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        working-directory: ./mobile
+        uses: actions/setup-node@v4
         with:
           node-version: 22.10.0
           cache: npm
-      - name: Navigate to mobile directory
-        working-directory: ./mobile
-        run: echo "Working in the mobile directory"
+
       - name: Install dependencies
         working-directory: ./mobile
         run: npm ci
+
       - name: Setup Expo and EAS
+        working-directory: ./mobile
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+
       - name: Build on EAS
         working-directory: ./mobile
         run: eas build --platform all --non-interactive --no-wait
