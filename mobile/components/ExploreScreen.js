@@ -1,57 +1,64 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
-import { SearchBar, Icon } from 'react-native-elements';
-const defaultImage = require('../assets/icon.png'); 
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 
+const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
-export default function CommunityScreen() {
-  const [search, setSearch] = React.useState('');
-  const trails = [
-    {
-      id: 1,
-      name: 'River Loop',
-      city: 'Charlotte',
-      state: 'North Carolina',
-      rating: 4.5,
-      difficulty: 'Moderate',
-      length: '5 miles',
-      time: '2 hours',
-      image: require('../assets/trail1.jpg'),
-    },
-    {
-      id: 2,
-      name: 'Trail Name 2',
-      city: 'City 2',
-      state: 'State 2',
-      rating: 4.0,
-      difficulty: 'Easy',
-      length: '3 miles',
-      time: '1.5 hours',
-      // No image provided for this trail
-    },
-    // Add more trail objects here
-  ];
+const users = [
+  {
+    id: 1,
+    firstName: 'CJ',
+    lastName: 'Carrier',
+    userName: 'Cj_Carrier',
+    email: 'cjcarrier7@gmail.com',
+    password: '123',
+    city: 'Charlotte',
+    state: 'North Carolina',
+    profilePic: defaultProfilePic,
+    trails: ['1', '2', '3'],
+  },
+  {
+    id: 2,
+    firstName: 'John',
+    lastName: 'Doe',
+    userName: 'John_Doe',
+    email: 'john.doe@example.com',
+    password: 'password',
+    city: 'New York',
+    state: 'New York',
+    profilePic: defaultProfilePic,
+    trails: ['4', '5'],
+  },
+];
+
+export default function ExploreScreen() {
+  const [search, setSearch] = useState('');
+  const [filteredUsers, setFilteredUsers] = useState(users);
+
+  const handleSearch = (text) => {
+    setSearch(text);
+    const filtered = users.filter(user =>
+      user.userName.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  };
 
   return (
     <View style={styles.container}>
-      <SearchBar
-        placeholder="Find trails"
-        onChangeText={setSearch}
+      <TextInput
+        style={styles.searchBar}
+        placeholder="Search by username"
         value={search}
-        lightTheme
-        round
-        containerStyle={styles.searchBarContainer}
-        inputContainerStyle={styles.searchBarInput}
+        onChangeText={handleSearch}
       />
-      <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {trails.map((trail) => (
-          <View key={trail.id} style={styles.trailContainer}>
-            <Image source={trail.image ? trail.image : defaultImage} style={styles.trailImage} />
-            <Text style={styles.trailName}>{trail.name}</Text>
-            <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
-            <Text style={styles.trailDetails}>
-              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length} | {trail.time}
-            </Text>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        {filteredUsers.map(user => (
+          <View key={user.id} style={styles.userContainer}>
+            <Image source={user.profilePic} style={styles.profilePicture} />
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{user.userName}</Text>
+              <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
+              <Text style={styles.location}>{user.city}, {user.state}</Text>
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -63,52 +70,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+    backgroundColor: '#fff',
   },
-  searchBarContainer: {
-    backgroundColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderTopColor: 'transparent',
-    marginVertical: 10,
-  },
-  searchBarInput: {
-    backgroundColor: '#e1e1e1',
+  searchBar: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 8,
+    marginBottom: 10,
   },
   scrollViewContent: {
     flexGrow: 1,
   },
-  scrollView: {
-    //backgroundColor: 'red',
-    margin: -12,
-  },
-  trailContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+  userContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 10,
-    marginVertical: 10,
-    marginHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
-    elevation: 1, 
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
   },
-  trailImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
-  trailName: {
-    fontSize: 18,
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 16,
     fontWeight: 'bold',
-    marginVertical: 5,
   },
-  trailLocation: {
+  fullName: {
     fontSize: 14,
-    color: 'grey',
+    color: 'gray',
   },
-  trailDetails: {
-    fontSize: 14,
-    color: 'grey',
-    marginTop: 5,
+  location: {
+    fontSize: 12,
+    color: 'gray',
   },
 });
