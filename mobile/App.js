@@ -6,6 +6,8 @@ import ProfileScreen from './components/ProfileScreen';
 import ExploreScreen from './components/ExploreScreen';
 import SavedScreen from './components/SavedScreen';
 import CommunityScreen from './components/CommunityScreen';
+import OpeningScreen from './components/OpeningScreen';
+
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -34,12 +36,20 @@ export default function App(){
 // initialization of actual app view, this is nested within the navigation container
 function MainTabNavigator(){
   return(
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={{
+        tabBarActiveTintColor: '#FFC107', // Set active tab color to yellow
+        tabBarInactiveTintColor: 'gray', // Set inactive tab color to gray
+      }}
+    >
       <Tab.Screen name="Community"  component={CommunityScreen} options= {{ title: 'Community' }}/>
       <Tab.Screen name="Explore" component={ExploreScreen} options= {{ title: 'Explore' }}/>
       <Tab.Screen name="Start Trail" component={StartTrailStackScreen} options={{ headerShown: false }} />
       <Tab.Screen name="Saved" component={SavedScreen} options= {{ title: 'Saved' }}/>
       <Tab.Screen name="Profile" component={ProfileScreen} options= {{ title: 'Profile', headerShown: false} }/>
+
+      {/* Testing screen for development */}
+      <Tab.Screen name="Testing" component={OpeningScreen} options= {{ title: 'Testing'}}/>
     </Tab.Navigator>
     )
 }
