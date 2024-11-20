@@ -1,16 +1,16 @@
-const BASE_URL = 'http://192.168.10.105:8080/api/users';  
+const BASE_URL = 'http://192.168.10.105:8080/users';  
 // *******Replace with your actual backend URL using your computer IP address NOT local host, local host address is different on your phone than your laptop*****************8
 
 //function to handle login
-export async function loginUser(userName, password){
+export async function loginUser(username, password){
     try{
-        const response = await fetch(`${BASE_URL}/login`, {
+        const response = await fetch(`${BASE_URL}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                userName: userName,
+                username: username,
                 password: password
             }),
         });
@@ -24,19 +24,19 @@ export async function loginUser(userName, password){
     }
 }
 
-export async function createUser(emailAddr, userName, firstName, lastName, password){
+export async function createUser(email, username, firstName, lastName, password){
     try{
-        const response = await fetch(`${BASE_URL}/register`, {
+        const response = await fetch(`${BASE_URL}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                emailAddr: emailAddr,
-                userName: userName,
+                email: email,
+                username: username,
                 firstName: firstName,
                 lastName: lastName, 
-                password: password
+                password: password,
             }),
         });
         if(!response.ok){
