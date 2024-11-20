@@ -58,7 +58,7 @@ jobs:
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
-          service: 'server'
+          service: 'trailblazer-server'
           flags: '--allow-unauthenticated'
           image: 'hunterstarets/trailblazer'
           env_vars: |
