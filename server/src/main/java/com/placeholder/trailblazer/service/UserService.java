@@ -38,6 +38,14 @@ public class UserService {
         return user;
     }
 
+    public User findByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new ObjectNotFoundException("Object not found! Username: " + username + ", Type: " + User.class.getName());
+        }
+        return user;
+    }
+
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
@@ -70,5 +78,9 @@ public class UserService {
     // Encrypts a user's password using BCrypt
     private String hashPassword(String plainTextPassword) {
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
+    }
+
+    public boolean checkPassword(String plainPassword, String hashedPassword) {
+        return BCrypt.checkpw(plainPassword, hashedPassword);
     }
 }
