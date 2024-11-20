@@ -7,13 +7,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.List;
 
 @Document(collection = "Trails")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Trail {
-
     @Id
     private String id;
     private String name;
@@ -22,9 +22,9 @@ public class Trail {
     private Double rating;
     private String difficulty;
     private Double length;
-    private int time;
-    private int pace;
-    private String profilePic;
+    private Double time;
+    private Double pace;
+    private List<String> images;
     private String username;
     private Date date;
     private String description;

@@ -1,13 +1,11 @@
 openapi: 3.0.0
 info:
-  title: TrailBlazer API
+  title: Trail API
   version: 1.0.0
 paths:
   /trails:
     get:
       summary: Get all trails
-      tags:
-        - Trails
       responses:
         '200':
           description: A list of trails
@@ -19,17 +17,14 @@ paths:
                   $ref: '#/components/schemas/Trail'
     post:
       summary: Create a new trail
-      tags:
-        - Trails
       requestBody:
-        description: Trail object that needs to be added
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Trail'
       responses:
-        '200':
+        '201':
           description: The created trail
           content:
             application/json:
@@ -38,33 +33,28 @@ paths:
   /trails/{id}:
     get:
       summary: Get a trail by ID
-      tags:
-        - Trails
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: A trail object
+          description: The trail with the specified ID
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trail'
     put:
       summary: Update a trail by ID
-      tags:
-        - Trails
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: string
       requestBody:
-        description: Trail object that needs to be updated
         required: true
         content:
           application/json:
@@ -79,11 +69,9 @@ paths:
                 $ref: '#/components/schemas/Trail'
     delete:
       summary: Delete a trail by ID
-      tags:
-        - Trails
       parameters:
-        - name: id
-          in: path
+        - in: path
+          name: id
           required: true
           schema:
             type: string
@@ -97,6 +85,7 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         name:
           type: string
         city:
@@ -105,19 +94,27 @@ components:
           type: string
         rating:
           type: number
+          format: double
         difficulty:
           type: string
         length:
           type: number
+          format: double
         time:
-          type: string
+          type: number
+          format: double
         pace:
-          type: string
-        profilePic:
-          type: string
-        userName:
+          type: number
+          format: double
+        images:
+          type: array
+          items:
+            type: string
+            format: uri
+        username:
           type: string
         date:
           type: string
+          format: date-time
         description:
           type: string
