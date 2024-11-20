@@ -52,9 +52,11 @@ public class UserService {
 
     // UPDATE METHODS
     public User updateUser(User user, String id) {
-        User usr = findUserById(id);
-        updateData(user, usr);
-        return userRepository.save(usr);
+        //get user to update by its id
+        //the passed in user object will have the updated data
+        User existingUser = findUserById(id);
+        updateData(existingUser, user);
+        return userRepository.save(existingUser);
     }
 
     // DELETE METHODS
@@ -63,16 +65,15 @@ public class UserService {
     }
 
     // UTIL METHODS
-    private void updateData(User user, User usr) {
-        usr.setFirstName(user.getFirstName());
-        usr.setLastName(user.getLastName());
-        usr.setUsername(user.getUsername());
-        usr.setEmail(user.getEmail());
-        usr.setPassword(user.getPassword());
-        usr.setCity(user.getCity());
-        usr.setState(user.getState());
-        usr.setProfilePic(user.getProfilePic());
-        usr.setTrails(user.getTrails());
+    private void updateData(User existingUser, User newUser) {
+        existingUser.setFirstName(newUser.getFirstName());
+        existingUser.setLastName(newUser.getLastName());
+        existingUser.setUsername(newUser.getUsername());
+        existingUser.setEmail(newUser.getEmail());
+        existingUser.setCity(newUser.getCity());
+        existingUser.setState(newUser.getState());
+        existingUser.setProfilePic(newUser.getProfilePic());
+        existingUser.setTrails(newUser.getTrails());
     }
 
     // Encrypts a user's password using BCrypt
