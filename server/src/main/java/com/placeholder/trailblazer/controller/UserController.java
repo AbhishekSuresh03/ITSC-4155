@@ -35,8 +35,13 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping
-    public User create(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<?> create(@RequestBody User user) {
+        try {
+            User createdUser = userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PutMapping(value = "/{id}")
@@ -57,9 +62,14 @@ public class UserController {
         String username = credentials.get("username");
         String password = credentials.get("password");
         User user = userService.findByUsername(username);
+        System.out.println(username);
+        System.out.println(password);
+        System.out.println(user);
         if (user != null && userService.checkPassword(password, user.getPassword())) {
+            System.out.println(user);
             return ResponseEntity.ok(user);
         } else {
+            System.out.println("bad request");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
