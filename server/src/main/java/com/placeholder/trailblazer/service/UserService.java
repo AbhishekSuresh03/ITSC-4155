@@ -19,6 +19,12 @@ public class UserService {
 
     // CREATE METHODS
     public User createUser(User user) {
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            throw new IllegalArgumentException("Username already exists");
+        }
         user.setId(UUID.randomUUID().toString().split("-")[0]);
         user.setPassword(hashPassword(user.getPassword()));
         return userRepository.save(user);

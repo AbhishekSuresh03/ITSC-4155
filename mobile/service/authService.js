@@ -4,7 +4,9 @@ const BASE_URL = 'http://10.106.8.53:8080/users';
 //function to handle login
 export async function loginUser(username, password){
     try{
-        const response = await fetch(`${BASE_URL}`, {
+        // console.log('login username: ' + username);
+        // console.log('login password: ' + password);
+        const response = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -18,6 +20,9 @@ export async function loginUser(username, password){
             throw new Error(await response.text()); //throw error if login fails
         }
 
+        // const responseData = await response.json(); // Await the JSON response
+        // console.log('response: ', responseData); // Log the response data
+
         return await response.json();
     } catch(error){
         throw error;
@@ -26,8 +31,8 @@ export async function loginUser(username, password){
 
 export async function createUser(formData){
     try{
-        console.log(formData);
-        console.log(BASE_URL);
+        // console.log(formData);
+        // console.log(BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'POST',
             headers: {
@@ -42,13 +47,13 @@ export async function createUser(formData){
                 city: formData.city,
                 state: formData.state,
                 profilePic: formData.profilePic,
-                trails: formData.trails,
+                trails: [],
             }),
         });
         if(!response.ok){
             throw new Error(await response.text());
         }
-
+        // console.log(response);
         return await response.json();
     } catch(error){
         throw error;
