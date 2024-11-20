@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.List;
 
 @Document(collection = "Users")
 @Data
@@ -12,9 +13,13 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class User {
     @Id
     private String id;
+    private String firstName;
+    private String lastName;
     private String username;
     private String email;
     private String password;
-    private String firstName;
-    private String lastName;
+    private String city;
+    private String state;
+    private String profilePic;
+    private List<String> trails;
 }
