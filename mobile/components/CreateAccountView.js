@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
+import { createUser } from '../service/authService'; // Import the createUser function
 
 /**
  * CreateAccountView component handles the user account creation process.
@@ -52,6 +53,7 @@ export default function CreateAccountView({ navigation }) {
 
   const handleSubmit = async () => {
     try {
+      console.log("test");
       const userData = await createUser(formData);   //this maeks a user   =-=-=-LATER
       navigation.navigate('Main');
       console.log(userData);

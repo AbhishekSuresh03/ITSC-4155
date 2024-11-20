@@ -33,19 +33,6 @@ export default function LoginAccountView({ navigation }) {
       return;
     }
 
-    if (!isUsernameValid(sanitizedUserName)) {
-      Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
-      return;
-    }
-
-    if (!isPasswordValid(sanitizedPassword)) {
-      Alert.alert(
-        'Invalid Password',
-        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
-      );
-      return;
-    }
-
     try {
       const userData = await loginUser(sanitizedUserName, sanitizedPassword);
       console.log(userData);
