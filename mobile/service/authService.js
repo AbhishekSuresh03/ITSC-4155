@@ -46,7 +46,7 @@ export async function createUser(formData){
                 password: formData.password,
                 city: formData.city,
                 state: formData.state,
-                profilePic: formData.profilePic,
+                profilePicture: formData.profilePicture,
                 trails: [],
             }),
         });
