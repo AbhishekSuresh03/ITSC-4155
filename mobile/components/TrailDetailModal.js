@@ -21,10 +21,10 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
             <Icon name="close" size={24} color="#fff" />
           </TouchableOpacity>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ width: '100%' }}>
-          <Image source={trail.image ? trail.image : defaultImage} style={styles.trailImage} />
+          <Image source={{uri: trail.primaryImage}} style={styles.trailImage} />
             <View style={styles.headerContainer}>
-              <Image source={trail.profilePic ? trail.profilePic : defaultProfilePic} style={styles.profilePicture} />
-              <Text style={styles.userName}>{trail.userName}</Text>
+              <Image source={{uri: trail.owner.profilePicture}} style={styles.profilePicture} />
+              <Text style={styles.userName}>{trail.owner.username}</Text>
             </View>
             <Text style={styles.trailName}>{trail.name}</Text>
             <View style={styles.trailInfo}>
