@@ -2,83 +2,20 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
-import { fetchTrails } from '../service/trailService'; 
+import { fetchTrails } from '../service/trailService';
 import { AuthContext } from '../context/AuthContext';
 
 // Default Images
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
-// const users = [
-//   {
-//     id: 1,
-//     firstName: 'CJ',
-//     lastName: 'Carrier',
-//     userName: 'Cj_Carrier',
-//     email: 'cjcarrier7@gmail.com',
-//     password: '123',
-//     city: 'Charlotte',
-//     state: 'North Carolina',
-//     profilePic: defaultProfilePic,
-//     trails: ['1', '2', '3'],
-//   },
-//   {
-//     id: 2,
-//     firstName: 'John',
-//     lastName: 'Doe',
-//     userName: 'John_Doe',
-//     email: 'john.doe@example.com',
-//     password: 'password',
-//     city: 'New York',
-//     state: 'New York',
-//     profilePic: defaultProfilePic,
-//     trails: ['4', '5'],
-//   },
-//   // Add more user objects here
-// ];
-// const trails = [
-  //   {
-  //     id: 1,
-  //     name: 'River Loop',
-  //     city: 'Charlotte',
-  //     state: 'North Carolina',
-  //     rating: 4.5,
-  //     difficulty: 'Moderate',
-  //     length: '5 miles',
-  //     time: '2 hours',
-  //     pace: '4:49',
-  //     image: require('../assets/trail1.jpg'),
-  //     profilePic: defaultProfilePic,
-  //     userName: 'John Doe',
-  //     date: '2023-10-01',
-  //     description: 'A beautiful trail along the river with moderate difficulty.',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Trail Name 2',
-  //     city: 'City 2',
-  //     state: 'State 2',
-  //     rating: 4.0,
-  //     difficulty: 'Easy',
-  //     length: '3 miles',
-  //     time: '1.5 hours',
-  //     pace: '5:00',
-  //     profilePic: defaultProfilePic,
-  //     userName: 'Jane Smith',
-  //     date: '2023-10-02',
-  //     description: 'An easy trail perfect for beginners.',
-  //   },
-  // ];
-
 export default function CommunityScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTrail, setSelectedTrail] = useState(null);
   const [activeTab, setActiveTab] = useState('Local');
-  const userLocation = { city: 'Charlotte', state: 'North Carolina' };
-  const userFriends = ['John Doe', 'Jane Smith'];
   const [trails, setTrails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useContext(AuthContext); // Access userfrom AuthContext
+  const { user } = useContext(AuthContext); // Access user from AuthContext
 
   useEffect(() => {
     const loadTrails = async () => {
@@ -93,7 +30,6 @@ export default function CommunityScreen({ navigation }) {
     };
     loadTrails();
   }, []);
-  
 
   const openModal = (trail) => {
     setSelectedTrail(trail);
@@ -107,9 +43,9 @@ export default function CommunityScreen({ navigation }) {
 
   const filteredTrails = trails.filter((trail) => {
     if (activeTab === 'Local') {
-      return trail.city === user.city || trail.state === user.state;
+      return user && (trail.city === user.city || trail.state === user.state);
     } else if (activeTab === 'Following') {
-      return userFriends.includes(trail.userName);
+      return user && user.friends.includes(trail.userName);
     }
     return true;
   });
@@ -252,5 +188,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'grey',
     marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

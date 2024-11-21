@@ -55,7 +55,7 @@ export default function CreateAccountView({ navigation }) {
   const handleSubmit = async () => {
     try {
       console.log("test");
-      const userData = await createUser(formData);   //this maeks a user   =-=-=-LATER
+      const userData = await createUser(formData);            //this maeks a user   =-=-=-LATER
       navigation.navigate('Main');
       console.log(userData);
     } catch (error) {

@@ -6,7 +6,8 @@ import {
     FIREBASE_PROJECT_ID,
     FIREBASE_STORAGE_BUCKET,
     FIREBASE_MESSAGING_SENDER_ID,
-    FIREBASE_APP_ID
+    FIREBASE_APP_ID,
+    PRODUCTION_BACKEND_URL
   } from "@env"; // Import environment variables
   
   const firebaseConfig = {
