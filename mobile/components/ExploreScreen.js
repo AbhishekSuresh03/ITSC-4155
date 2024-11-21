@@ -2,34 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { getAllUsers } from '../service/userService';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
-
-// const users = [
-//   {
-//     id: 1,
-//     firstName: 'CJ',
-//     lastName: 'Carrier',
-//     userName: 'Cj_Carrier',
-//     email: 'cjcarrier7@gmail.com',
-//     password: '123',
-//     city: 'Charlotte',
-//     state: 'North Carolina',
-//     profilePic: defaultProfilePic,
-//     trails: ['1', '2', '3'],
-//   },
-//   {
-//     id: 2,
-//     firstName: 'John',
-//     lastName: 'Doe',
-//     userName: 'John_Doe',
-//     email: 'john.doe@example.com',
-//     password: 'password',
-//     city: 'New York',
-//     state: 'New York',
-//     profilePic: defaultProfilePic,
-//     trails: ['4', '5'],
-//   },
-// ];
-
 export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);

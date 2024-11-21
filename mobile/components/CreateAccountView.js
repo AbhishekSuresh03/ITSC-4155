@@ -1,23 +1,10 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
 import { createUser } from '../service/authService'; // Import the createUser function
 import { uploadProfilePic } from '../service/fileService';
 
-/**
- * CreateAccountView component handles the user account creation process.
- * 
- * This component manages a multi-step form for creating a new user account. It includes input fields for user details,
- * navigation between steps, and submission of the form data. The component also allows the user to pick a profile picture
- * from their device's image library.
- * 
- * @component
- * @param {Object} props - The component props.
- * @param {Object} props.navigation - The navigation object provided by React Navigation.
- * 
- * @returns {JSX.Element} The rendered component.
- */
 export default function CreateAccountView({ navigation }) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -31,6 +18,7 @@ export default function CreateAccountView({ navigation }) {
     password: '',
     profilePicture: '',
   });
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (name, value) => {
     setFormData({ ...formData, [name]: value });
@@ -53,31 +41,19 @@ export default function CreateAccountView({ navigation }) {
   };
 
   const handleSubmit = async () => {
+    setLoading(true);
     try {
-      console.log("test");
-      const userData = await createUser(formData);            //this maeks a user   =-=-=-LATER
+      const userData = await createUser(formData);
       navigation.navigate('Main');
       console.log(userData);
     } catch (error) {
       console.error('Create account error:', error.message);
       Alert.alert('Account could not be created', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-
-
-/**
- * Asynchronously opens the image library for the user to pick an image.
- * 
- * This function uses the ImagePicker API to allow the user to select an image from their device's image library.
- * 
- * If an image is picked successfully, the image URI is stored in the formData state under the profilePicture key.
- * If the image picking is canceled, a message is logged to the console.
- * 
- * @async
- * @function pickImage
- * @returns {Promise<void>} A promise that resolves when the image picking process is complete.
- */
   const pickImage = async () => {
     console.log('Pick image button pressed');
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -90,11 +66,17 @@ export default function CreateAccountView({ navigation }) {
     console.log('Image picker result:', result);
 
     if (!result.canceled) {
-      console.log('Image picked:', result.assets[0].uri);
-      //uploads image to firebase cloud storage
-      //returns url to hosted image
-      const downloadURL = await uploadProfilePic(result.assets[0].uri );
-      setFormData({ ...formData, profilePicture: downloadURL }); //sets the profile picture to the url to be stored in the database
+      setLoading(true);
+      try {
+        console.log('Image picked:', result.assets[0].uri);
+        const downloadURL = await uploadProfilePic(result.assets[0].uri);
+        setFormData({ ...formData, profilePicture: downloadURL });
+      } catch (error) {
+        console.error('Image upload error:', error.message);
+        Alert.alert('Image could not be uploaded', error.message);
+      } finally {
+        setLoading(false);
+      }
     } else {
       console.log('Image picking canceled');
     }
@@ -196,6 +178,15 @@ export default function CreateAccountView({ navigation }) {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Progress.Bar progress={step / 5} width={null} color="#FFC107" style={styles.progressBar} />
@@ -271,5 +262,10 @@ const styles = StyleSheet.create({
     borderRadius: 200,
     marginBottom: 80, 
     alignSelf: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
