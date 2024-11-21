@@ -3,6 +3,7 @@ import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpaci
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
 import { createUser } from '../service/authService'; // Import the createUser function
+import { uploadProfilePic } from '../service/fileService';
 
 /**
  * CreateAccountView component handles the user account creation process.
@@ -28,7 +29,7 @@ export default function CreateAccountView({ navigation }) {
     birthday: '',
     email: '',
     password: '',
-    profilePicture: null,
+    profilePicture: '',
   });
 
   const handleInputChange = (name, value) => {
@@ -90,7 +91,10 @@ export default function CreateAccountView({ navigation }) {
 
     if (!result.canceled) {
       console.log('Image picked:', result.assets[0].uri);
-      setFormData({ ...formData, profilePicture: result.assets[0].uri });
+      //uploads image to firebase cloud storage
+      //returns url to hosted image
+      const downloadURL = await uploadProfilePic(result.assets[0].uri );
+      setFormData({ ...formData, profilePicture: downloadURL }); //sets the profile picture to the url to be stored in the database
     } else {
       console.log('Image picking canceled');
     }

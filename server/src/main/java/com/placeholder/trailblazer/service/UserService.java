@@ -78,7 +78,7 @@ public class UserService {
         existingUser.setEmail(newUser.getEmail());
         existingUser.setCity(newUser.getCity());
         existingUser.setState(newUser.getState());
-        existingUser.setProfilePic(newUser.getProfilePic());
+        existingUser.setProfilePicture(newUser.getProfilePicture());
         existingUser.setTrails(newUser.getTrails());
     }
 
