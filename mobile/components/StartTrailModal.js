@@ -1,123 +1,153 @@
-import React, { useState, useContext } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { uploadTrailPic } from '../service/fileService';
-import { createTrail } from '../service/trailService';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, TextInput, TouchableOpacity } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
+import Modal from 'react-native-modal';
+import { Slider } from 'react-native-paper';
 
-export default function StartTrailModalScreen({ navigation }) {
-  const [name, setName] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [rating, setRating] = useState('');
-  const [difficulty, setDifficulty] = useState('');
-  const [length, setLength] = useState('');
-  const [time, setTime] = useState('');
-  const [pace, setPace] = useState('');
-  const [description, setDescription] = useState('');
-  const [images, setImages] = useState([]);
-  const[primaryImage, setPrimaryImage] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const { user } = useContext(AuthContext); // Access user and logout from AuthContext
+const TrailApp = () => {
+    const [userLocation, setUserLocation] = useState(null);
+    const [tracking, setTracking] = useState(false);
+    const [startTime, setStartTime] = useState(null);
+    const [endTime, setEndTime] = useState(null);
+    const [distance, setDistance] = useState(0);
+    const [trailName, setTrailName] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [rating, setRating] = useState(5); // Default rating is 5
+    const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const pickImages = async () => {
-    console.log('Pick image button pressed');
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      allowsEditing: true,
-      aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
-      quality: 1,
-    });
+    useEffect(() => {
+        // Request location permissions and set initial user location
+        navigator.geolocation.getCurrentPosition((position) => {
+            setUserLocation(position.coords);
+            setCity('Sample City'); // Replace with dynamic city based on location if needed
+            setState('Sample State'); // Replace with dynamic state based on location if needed
+        });
+    }, []);
 
-    console.log('Image picker result:', result);
+    // Haversine formula to calculate distance between two lat/lng points (in miles)
+    const calculateDistance = (startCoords, endCoords) => {
+        const toRadians = (degree) => degree * (Math.PI / 180);
+        const R = 3958.8; // Radius of the Earth in miles
 
-    if (!result.canceled) {
-      const uploadedImages = images.slice(); //clearing the array
-      //uploading each image individually
-      // const downloadURL = await uploadTrailPic(result.assets[0].uri);
-      for (let image of result.assets || []) {
-        // console.log("START TRAIL: " + image.uri);
-        const downloadURL = await uploadTrailPic(image.uri);
-        console.log('StartTrailModal' + downloadURL);
-        uploadedImages.push(downloadURL); //adding the url to the array
-      }
-      setImages(uploadedImages); //updating the state with the array of urls
-    } else {
-      console.log('Image picking canceled');
-    }
-  };
-  const pickPrimaryImage = async () => {
-    console.log('Pick image button pressed');
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      allowsEditing: true,
-      aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
-      quality: 1,
-    });
-    if (!result.canceled) {
-      const downloadURL = await uploadTrailPic(result.assets[0].uri);
-      setPrimaryImage(downloadURL); 
-    } else {
-      console.log('Image picking canceled');
-    }
-  };
+        const dLat = toRadians(endCoords.latitude - startCoords.latitude);
+        const dLon = toRadians(endCoords.longitude - startCoords.longitude);
+        const lat1 = toRadians(startCoords.latitude);
+        const lat2 = toRadians(endCoords.latitude);
 
-  const handleSubmit = async () => {
-    const formData = {
-      name,
-      city,
-      state,
-      rating: parseFloat(rating),
-      difficulty,
-      length: parseFloat(length),
-      time: parseFloat(time),
-      pace: parseFloat(pace),
-      images,
-      primaryImage,
-      date: new Date(),
-      description,
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Distance in miles
     };
 
-    try {
-      await createTrail(formData, user.id);
-      navigation.goBack();
-    } catch (error) {
-      console.error('Failed to create trail:', error);
-    }
-  };
+    const startTrail = () => {
+        setTracking(true);
+        setStartTime(new Date());
+    };
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <TextInput style={styles.input} placeholder="Name" value={name} onChangeText={setName} />
-      <TextInput style={styles.input} placeholder="City" value={city} onChangeText={setCity} />
-      <TextInput style={styles.input} placeholder="State" value={state} onChangeText={setState} />
-      <TextInput style={styles.input} placeholder="Rating" value={rating} onChangeText={setRating} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Difficulty" value={difficulty} onChangeText={setDifficulty} />
-      <TextInput style={styles.input} placeholder="Length" value={length} onChangeText={setLength} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Time" value={time} onChangeText={setTime} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Pace" value={pace} onChangeText={setPace} keyboardType="numeric" />
-      <TextInput style={styles.input} placeholder="Description" value={description} onChangeText={setDescription} multiline />
-      <Button title="Upload Primary Image" onPress={pickPrimaryImage} />
-      <Button title="Upload Images" onPress={pickImages} />
-      <Button title="Create Trail" onPress={handleSubmit} />
-      <Text style={styles.uploadedImagesTitle}>Uploaded Primary Image:</Text>
-      <Image source={{ uri: primaryImage }} style={styles.uploadedImage} />
-      <Text style={styles.uploadedImagesTitle}>Uploaded Images:</Text>
-      {images.length > 0 && (
-        <View style={styles.uploadedImagesContainer}>
-          <ScrollView horizontal>
-          {images.map((image, index) => {
-            // console.log(`Image URL ${index}: ${image}`);
-            return <Image key={index} source={{ uri: image }} style={styles.uploadedImage} />;
-          })}
-          </ScrollView>
+    const endTrail = () => {
+        setTracking(false);
+        setEndTime(new Date());
+        const timeTaken = (new Date() - startTime) / 1000 / 60; // Time in minutes
+        if (userLocation) {
+            const trailDistance = calculateDistance(userLocation, userLocation); // Replace with real path coordinates
+            setDistance(trailDistance);
+        }
+        setIsModalVisible(true);
+    };
+
+    const submitTrail = () => {
+        // Handle form submission logic
+        console.log({
+            trailName,
+            city,
+            state,
+            timeTaken: (endTime - startTime) / 1000 / 60, // Time in minutes
+            distance,
+            rating,
+        });
+
+        // Close modal after submission
+        setIsModalVisible(false);
+    };
+
+    return (
+        <View style={{ flex: 1 }}>
+            <MapView
+                style={{ flex: 1 }}
+                initialRegion={{
+                    latitude: userLocation ? userLocation.latitude : 37.78825,
+                    longitude: userLocation ? userLocation.longitude : -122.4324,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                }}
+            >
+                {userLocation && (
+                    <Marker coordinate={{ latitude: userLocation.latitude, longitude: userLocation.longitude }} />
+                )}
+            </MapView>
+
+            <View style={{ position: 'absolute', bottom: 50, left: 20, right: 20 }}>
+                <Button
+                    title={tracking ? 'End Trail' : 'Start Trail'}
+                    onPress={tracking ? endTrail : startTrail}
+                />
+            </View>
+
+            {/* Modal for submitting the trail */}
+            <Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)}>
+                <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
+                    <TextInput
+                        placeholder="Trail Name"
+                        value={trailName}
+                        onChangeText={setTrailName}
+                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                    />
+                    <TextInput
+                        placeholder="City"
+                        value={city}
+                        editable={false} // City is auto-populated
+                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                    />
+                    <TextInput
+                        placeholder="State"
+                        value={state}
+                        editable={false} // State is auto-populated
+                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                    />
+                    <TextInput
+                        placeholder="Time Taken (Minutes)"
+                        value={((endTime - startTime) / 1000 / 60).toFixed(2)}
+                        editable={false} // Time is auto-populated
+                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                    />
+                    <TextInput
+                        placeholder="Distance (Miles)"
+                        value={distance.toFixed(2)}
+                        editable={false} // Distance is auto-populated
+                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                    />
+                    <Text>Rating: {rating}</Text>
+                    <Slider
+                        value={rating}
+                        onValueChange={setRating}
+                        minimumValue={1}
+                        maximumValue={10}
+                        step={1}
+                        style={{ marginBottom: 20 }}
+                    />
+                    <TouchableOpacity onPress={submitTrail}>
+                        <Text style={{ textAlign: 'center', color: 'blue' }}>Submit Trail</Text>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
         </View>
-      )}
-    </ScrollView>
   );
 }
+export default TrailApp;
 
 const styles = StyleSheet.create({
   container: {
