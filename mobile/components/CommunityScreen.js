@@ -1,39 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
+import { fetchTrails } from '../service/trailService'; 
+import { AuthContext } from '../context/AuthContext';
 
 // Default Images
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
-const users = [
-  {
-    id: 1,
-    firstName: 'CJ',
-    lastName: 'Carrier',
-    userName: 'Cj_Carrier',
-    email: 'cjcarrier7@gmail.com',
-    password: '123',
-    city: 'Charlotte',
-    state: 'North Carolina',
-    profilePic: defaultProfilePic,
-    trails: ['1', '2', '3'],
-  },
-  {
-    id: 2,
-    firstName: 'John',
-    lastName: 'Doe',
-    userName: 'John_Doe',
-    email: 'john.doe@example.com',
-    password: 'password',
-    city: 'New York',
-    state: 'New York',
-    profilePic: defaultProfilePic,
-    trails: ['4', '5'],
-  },
-  // Add more user objects here
-];
+// const users = [
+//   {
+//     id: 1,
+//     firstName: 'CJ',
+//     lastName: 'Carrier',
+//     userName: 'Cj_Carrier',
+//     email: 'cjcarrier7@gmail.com',
+//     password: '123',
+//     city: 'Charlotte',
+//     state: 'North Carolina',
+//     profilePic: defaultProfilePic,
+//     trails: ['1', '2', '3'],
+//   },
+//   {
+//     id: 2,
+//     firstName: 'John',
+//     lastName: 'Doe',
+//     userName: 'John_Doe',
+//     email: 'john.doe@example.com',
+//     password: 'password',
+//     city: 'New York',
+//     state: 'New York',
+//     profilePic: defaultProfilePic,
+//     trails: ['4', '5'],
+//   },
+//   // Add more user objects here
+// ];
+// const trails = [
+  //   {
+  //     id: 1,
+  //     name: 'River Loop',
+  //     city: 'Charlotte',
+  //     state: 'North Carolina',
+  //     rating: 4.5,
+  //     difficulty: 'Moderate',
+  //     length: '5 miles',
+  //     time: '2 hours',
+  //     pace: '4:49',
+  //     image: require('../assets/trail1.jpg'),
+  //     profilePic: defaultProfilePic,
+  //     userName: 'John Doe',
+  //     date: '2023-10-01',
+  //     description: 'A beautiful trail along the river with moderate difficulty.',
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Trail Name 2',
+  //     city: 'City 2',
+  //     state: 'State 2',
+  //     rating: 4.0,
+  //     difficulty: 'Easy',
+  //     length: '3 miles',
+  //     time: '1.5 hours',
+  //     pace: '5:00',
+  //     profilePic: defaultProfilePic,
+  //     userName: 'Jane Smith',
+  //     date: '2023-10-02',
+  //     description: 'An easy trail perfect for beginners.',
+  //   },
+  // ];
 
 export default function CommunityScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -41,40 +76,24 @@ export default function CommunityScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Local');
   const userLocation = { city: 'Charlotte', state: 'North Carolina' };
   const userFriends = ['John Doe', 'Jane Smith'];
+  const [trails, setTrails] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext); // Access userfrom AuthContext
 
-  const trails = [
-    {
-      id: 1,
-      name: 'River Loop',
-      city: 'Charlotte',
-      state: 'North Carolina',
-      rating: 4.5,
-      difficulty: 'Moderate',
-      length: '5 miles',
-      time: '2 hours',
-      pace: '4:49',
-      image: require('../assets/trail1.jpg'),
-      profilePic: defaultProfilePic,
-      userName: 'John Doe',
-      date: '2023-10-01',
-      description: 'A beautiful trail along the river with moderate difficulty.',
-    },
-    {
-      id: 2,
-      name: 'Trail Name 2',
-      city: 'City 2',
-      state: 'State 2',
-      rating: 4.0,
-      difficulty: 'Easy',
-      length: '3 miles',
-      time: '1.5 hours',
-      pace: '5:00',
-      profilePic: defaultProfilePic,
-      userName: 'Jane Smith',
-      date: '2023-10-02',
-      description: 'An easy trail perfect for beginners.',
-    },
-  ];
+  useEffect(() => {
+    const loadTrails = async () => {
+      try {
+        const fetchedTrails = await fetchTrails();
+        setTrails(fetchedTrails);
+      } catch (error) {
+        console.error('Error fetching trails:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrails();
+  }, []);
+  
 
   const openModal = (trail) => {
     setSelectedTrail(trail);
@@ -88,12 +107,20 @@ export default function CommunityScreen({ navigation }) {
 
   const filteredTrails = trails.filter((trail) => {
     if (activeTab === 'Local') {
-      return trail.city === userLocation.city || trail.state === userLocation.state;
+      return trail.city === user.city || trail.state === user.state;
     } else if (activeTab === 'Following') {
       return userFriends.includes(trail.userName);
     }
     return true;
   });
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading trails...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -118,7 +145,7 @@ export default function CommunityScreen({ navigation }) {
                 <Text style={styles.date}>{trail.date}</Text>
               </View>
             </View>
-            <Image source={trail.image ? trail.image : defaultImage} style={styles.trailImage} />
+            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
             <Text style={styles.trailName}>{trail.name}</Text>
             <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
             <Text style={styles.trailDetails}>
