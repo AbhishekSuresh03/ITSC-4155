@@ -9,8 +9,7 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
 //function to handle login
 export async function loginUser(username, password){
     try{
-        // console.log('login username: ' + username);
-        // console.log('login password: ' + password);
+        //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
         const response = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
             headers: {
@@ -36,8 +35,6 @@ export async function loginUser(username, password){
 
 export async function createUser(formData){
     try{
-        // console.log(formData);
-        // console.log(BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'POST',
             headers: {
