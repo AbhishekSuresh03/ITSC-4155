@@ -5,6 +5,7 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/trails`;
 
 export async function fetchTrails() {
     try {
+        //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
         const response = await fetch(`${BASE_URL}`, {
             method: 'GET',
             headers: {
