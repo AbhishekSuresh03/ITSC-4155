@@ -1,7 +1,10 @@
 package com.placeholder.trailblazer.service;
 
+import com.placeholder.trailblazer.controller.TrailController;
 import com.placeholder.trailblazer.model.Trail;
+import com.placeholder.trailblazer.model.User;
 import com.placeholder.trailblazer.repository.TrailRepository;
+import com.placeholder.trailblazer.repository.UserRepository;
 import com.placeholder.trailblazer.service.exceptions.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,11 +17,26 @@ public class TrailService {
     @Autowired
     private TrailRepository trailRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     // CRUD Operations
 
     // CREATE METHODS
-    public Trail createTrail(Trail trail) {
+    public Trail createTrail(Trail trail, String ownerId) {
+
+        User owner = userRepository.findById(ownerId).orElseThrow(
+                () -> new ObjectNotFoundException("User not found! Id: " + ownerId + ", Type: " + User.class.getName()));
+
+        // Set only the required fields in the owner object
+        User ownerInfo = new User();
+        ownerInfo.setUsername(owner.getUsername());
+        ownerInfo.setFirstName(owner.getFirstName());
+        ownerInfo.setLastName(owner.getLastName());
+        ownerInfo.setProfilePicture(owner.getProfilePicture());
+
         trail.setId(UUID.randomUUID().toString().split("-")[0]);
+        trail.setOwner(ownerInfo);
         return trailRepository.save(trail);
     }
 
@@ -28,12 +46,8 @@ public class TrailService {
                 () -> new ObjectNotFoundException("Object not found! Id: " + id + ", Type: " + Trail.class.getName()));
     }
 
-    public Trail findTrailByUsername(String username) {
-        Trail trail = trailRepository.findByUsername(username);
-        if (trail == null) {
-            throw new ObjectNotFoundException("Object not found! Username: " + username + ", Type: " + Trail.class.getName());
-        }
-        return trail;
+    public List<Trail> findTrailsByOwnerId(String ownerId) {
+        return trailRepository.findByOwnerId(ownerId);
     }
 
     public List<Trail> findAllTrails() {
@@ -63,7 +77,8 @@ public class TrailService {
         trl.setTime(trail.getTime());
         trl.setPace(trail.getPace());
         trl.setImages(trail.getImages());
-        trl.setUsername(trail.getUsername());
+        trl.setPrimaryImage(trail.getPrimaryImage());
+        trl.setOwner(trail.getOwner());
         trl.setDate(trail.getDate());
         trl.setDescription(trail.getDescription());
     }

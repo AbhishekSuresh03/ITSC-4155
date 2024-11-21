@@ -25,7 +25,8 @@ public class Trail {
     private Double time;
     private Double pace;
     private List<String> images;
-    private String username;
+    private String primaryImage;
+    private User owner;
     private Date date;
     private String description;
 }

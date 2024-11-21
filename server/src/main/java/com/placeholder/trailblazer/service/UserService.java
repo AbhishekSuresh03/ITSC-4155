@@ -19,6 +19,12 @@ public class UserService {
 
     // CREATE METHODS
     public User createUser(User user) {
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            throw new IllegalArgumentException("Email already exists");
+        }
+        if (userRepository.findByUsername(user.getUsername()) != null) {
+            throw new IllegalArgumentException("Username already exists");
+        }
         user.setId(UUID.randomUUID().toString().split("-")[0]);
         user.setPassword(hashPassword(user.getPassword()));
         return userRepository.save(user);
@@ -38,15 +44,25 @@ public class UserService {
         return user;
     }
 
+    public User findByUsername(String username) {
+        User user = userRepository.findByUsername(username);
+        if (user == null) {
+            throw new ObjectNotFoundException("Object not found! Username: " + username + ", Type: " + User.class.getName());
+        }
+        return user;
+    }
+
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
 
     // UPDATE METHODS
     public User updateUser(User user, String id) {
-        User usr = findUserById(id);
-        updateData(user, usr);
-        return userRepository.save(usr);
+        //get user to update by its id
+        //the passed in user object will have the updated data
+        User existingUser = findUserById(id);
+        updateData(existingUser, user);
+        return userRepository.save(existingUser);
     }
 
     // DELETE METHODS
@@ -55,20 +71,23 @@ public class UserService {
     }
 
     // UTIL METHODS
-    private void updateData(User user, User usr) {
-        usr.setFirstName(user.getFirstName());
-        usr.setLastName(user.getLastName());
-        usr.setUsername(user.getUsername());
-        usr.setEmail(user.getEmail());
-        usr.setPassword(user.getPassword());
-        usr.setCity(user.getCity());
-        usr.setState(user.getState());
-        usr.setProfilePic(user.getProfilePic());
-        usr.setTrails(user.getTrails());
+    private void updateData(User existingUser, User newUser) {
+        existingUser.setFirstName(newUser.getFirstName());
+        existingUser.setLastName(newUser.getLastName());
+        existingUser.setUsername(newUser.getUsername());
+        existingUser.setEmail(newUser.getEmail());
+        existingUser.setCity(newUser.getCity());
+        existingUser.setState(newUser.getState());
+        existingUser.setProfilePicture(newUser.getProfilePicture());
+        existingUser.setTrails(newUser.getTrails());
     }
 
     // Encrypts a user's password using BCrypt
     private String hashPassword(String plainTextPassword) {
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
+    }
+
+    public boolean checkPassword(String plainPassword, String hashedPassword) {
+        return BCrypt.checkpw(plainPassword, hashedPassword);
     }
 }

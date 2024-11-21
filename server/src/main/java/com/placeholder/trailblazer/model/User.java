@@ -20,6 +20,6 @@ public class User {
     private String password;
     private String city;
     private String state;
-    private String profilePic;
+    private String profilePicture;
     private List<String> trails;
 }

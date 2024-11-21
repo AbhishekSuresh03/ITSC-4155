@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { loginUser } from '../service/authService'; // Adjust the import path as needed
+import { loginUser } from '../service/authService'; 
+import { AuthContext } from '../context/AuthContext';
 
 
 export default function LoginAccountView({ navigation }) {
+  const { login } = useContext(AuthContext); //use login function from AuthContext
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
@@ -33,22 +35,9 @@ export default function LoginAccountView({ navigation }) {
       return;
     }
 
-    if (!isUsernameValid(sanitizedUserName)) {
-      Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
-      return;
-    }
-
-    if (!isPasswordValid(sanitizedPassword)) {
-      Alert.alert(
-        'Invalid Password',
-        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
-      );
-      return;
-    }
-
     try {
-      const userData = await loginUser(sanitizedUserName, sanitizedPassword);
-      console.log(userData);
+      const userData = await loginUser(sanitizedUserName, sanitizedPassword); //calling backend to login
+      login(userData); // saving user data in context and AsyncStorage
       navigation.navigate('Main');
     } catch (error) {
       console.error('Login account error:', error.message); // This will log to the browser console

@@ -27,8 +27,14 @@ public class TrailController {
 
     @CrossOrigin
     @PostMapping
-    public Trail create(@RequestBody Trail trail) {
-        return trailService.createTrail(trail);
+    public Trail create(@RequestBody Trail trail, @RequestParam String ownerId) {
+        return trailService.createTrail(trail, ownerId);
+    }
+
+    @CrossOrigin
+    @GetMapping(value = "/owner/{ownerId}")
+    public List<Trail> findByOwnerId(@PathVariable String ownerId) {
+        return trailService.findTrailsByOwnerId(ownerId);
     }
 
     @PutMapping(value = "/{id}")
