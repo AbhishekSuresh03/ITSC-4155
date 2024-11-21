@@ -1,38 +1,38 @@
 openapi: 3.0.0
 info:
-  title: User API
+  title: Trail API
   version: 1.0.0
 paths:
-  /users:
+  /trails:
     get:
-      summary: Get all users
+      summary: Get all trails
       responses:
         '200':
-          description: A list of users
+          description: A list of trails
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/Trail'
     post:
-      summary: Create a new user
+      summary: Create a new trail
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/Trail'
       responses:
         '201':
-          description: The created user
+          description: The created trail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-  /users/{id}:
+                $ref: '#/components/schemas/Trail'
+  /trails/{id}:
     get:
-      summary: Get a user by ID
+      summary: Get a trail by ID
       parameters:
         - in: path
           name: id
@@ -41,13 +41,13 @@ paths:
             type: string
       responses:
         '200':
-          description: The user with the specified ID
+          description: The trail with the specified ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Trail'
     put:
-      summary: Update a user by ID
+      summary: Update a trail by ID
       parameters:
         - in: path
           name: id
@@ -59,16 +59,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/Trail'
       responses:
         '200':
-          description: The updated user
+          description: The updated trail
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/Trail'
     delete:
-      summary: Delete a user by ID
+      summary: Delete a trail by ID
       parameters:
         - in: path
           name: id
@@ -78,49 +78,43 @@ paths:
       responses:
         '204':
           description: No content
-  /users/email:
-    get:
-      summary: Get a user by email
-      parameters:
-        - in: query
-          name: value
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: The user with the specified email
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
 components:
   schemas:
-    User:
+    Trail:
       type: object
       properties:
         id:
           type: string
           format: uuid
-        firstName:
-          type: string
-        lastName:
-          type: string
-        username:
-          type: string
-        email:
-          type: string
-          format: email
-        password:
+        name:
           type: string
         city:
           type: string
         state:
           type: string
-        profilePic:
+        rating:
+          type: number
+          format: double
+        difficulty:
           type: string
-          format: uri
-        trails:
+        length:
+          type: number
+          format: double
+        time:
+          type: number
+          format: double
+        pace:
+          type: number
+          format: double
+        images:
           type: array
           items:
             type: string
+            format: uri
+        username:
+          type: string
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string

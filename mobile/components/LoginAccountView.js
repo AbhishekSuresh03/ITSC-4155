@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { loginUser } from '../service/authService'; // Adjust the import path as needed
+import { loginUser } from '../service/authService';
+import { AuthContext } from '../context/AuthContext';
 import { sanitizeInput, validateUsername, validatePassword } from '../utils/sanitize.js';
 
 export default function LoginAccountView({ navigation }) {
+  const { login } = useContext(AuthContext); // Access login function from AuthContext
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
@@ -32,12 +34,12 @@ export default function LoginAccountView({ navigation }) {
     }
 
     try {
-      const userData = await loginUser(sanitizedUserName, sanitizedPassword);
-      console.log(userData);
+      const userData = await loginUser(sanitizedUserName, sanitizedPassword); // Call backend to login
+      login(userData); // Save user data in context and AsyncStorage
       navigation.navigate('Main');
     } catch (error) {
-      console.error('Login account error:', error.message); // This will log to the browser console
-      Alert.alert('Login Failed', error.message); // this will log error on the phone
+      console.error('Login account error:', error.message); // Log to the console
+      Alert.alert('Login Failed', error.message); // Display error on the phone
     }
   };
 
@@ -49,7 +51,7 @@ export default function LoginAccountView({ navigation }) {
         style={styles.input}
         placeholder="User Name"
         value={userName}
-        onChangeText={setUserName}
+        onChangeText={(text) => setUserName(sanitizeInput(text))} // Sanitize input as the user types
         maxLength={20}
       />
 
@@ -58,7 +60,7 @@ export default function LoginAccountView({ navigation }) {
         placeholder="Password"
         value={password}
         secureTextEntry
-        onChangeText={setPassword}
+        onChangeText={(text) => setPassword(sanitizeInput(text))} // Sanitize input as the user types
         maxLength={50}
       />
 

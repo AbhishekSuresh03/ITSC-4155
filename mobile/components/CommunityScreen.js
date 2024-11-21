@@ -1,86 +1,91 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
 import { sanitizeSearchQuery } from '../utils/sanitize.js';
+import { fetchTrails } from '../service/trailService';
+import { AuthContext } from '../context/AuthContext';
 
-// Default images for trail and profile picture
+// Default Images
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
-export default function CommunityScreen() {
-  // State to manage the search input
-  const [search, setSearch] = React.useState('');
-  // State to manage the visibility of the modal
+export default function CommunityScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
-  // State to manage the selected trail for the modal
   const [selectedTrail, setSelectedTrail] = useState(null);
+  const [activeTab, setActiveTab] = useState('Local');
+  const [trails, setTrails] = useState([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const { user } = useContext(AuthContext);
 
-  // Sample trail data
-  const trails = [
-    {
-      id: 1,
-      name: 'River Loop',
-      city: 'Charlotte',
-      state: 'North Carolina',
-      rating: 4.5,
-      difficulty: 'Moderate',
-      length: '5 miles',
-      time: '2 hours',
-      pace: '4:49',
-      image: require('../assets/trail1.jpg'),
-      profilePic: defaultProfilePic,
-      userName: 'John Doe',
-      date: '2023-10-01',
-      description: 'A beautiful trail along the river with moderate difficulty.',
-    },
-    {
-      id: 2,
-      name: 'Trail Name 2 - - - - - - - - - --------',
-      city: 'City 2',
-      state: 'State 2',
-      rating: 4.0,
-      difficulty: 'Easy',
-      length: '3 miles',
-      time: '1.5 hours',
-      pace: '8899:489',
-      // No image provided for this trail
-      profilePic: defaultProfilePic,
-      userName: 'Jane Smith',
-      date: '2023-10-02',
-      description: 'An easy trail perfect for beginners. I initially Thought it was going to be difficult but after i did it i realized it was so easy!',
-    },
-    // Add more trail objects here
-  ];
+  useEffect(() => {
+    const loadTrails = async () => {
+      try {
+        const fetchedTrails = await fetchTrails();
+        setTrails(fetchedTrails);
+      } catch (error) {
+        console.error('Error fetching trails:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTrails();
+  }, []);
 
-  // Function to open the modal and set the selected trail
   const openModal = (trail) => {
     setSelectedTrail(trail);
     setModalVisible(true);
   };
 
-  // Function to close the modal and reset the selected trail
   const closeModal = () => {
     setModalVisible(false);
     setSelectedTrail(null);
   };
 
+  const filteredTrails = trails.filter((trail) => {
+    const sanitizedSearch = sanitizeSearchQuery(search).toLowerCase();
+    const matchesSearch = trail.name.toLowerCase().includes(sanitizedSearch);
+    if (activeTab === 'Local') {
+      return (
+        matchesSearch &&
+        user &&
+        (trail.city === user.city || trail.state === user.state)
+      );
+    } else if (activeTab === 'Following') {
+      return (
+        matchesSearch &&
+        user &&
+        user.friends.includes(trail.userName)
+      );
+    }
+    return matchesSearch;
+  });
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Loading trails...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      {/* Navbar with two options: Local and Following */}
+      {/* Navbar for switching between Local and Following */}
       <View style={styles.navbar}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navButtonText}>Local</Text>
+        <TouchableOpacity style={styles.navButton} onPress={() => setActiveTab('Local')}>
+          <Text style={[styles.navButtonText, activeTab === 'Local' && styles.activeNavButtonText]}>Local</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navButtonText}>Following</Text>
+        <TouchableOpacity style={styles.navButton} onPress={() => setActiveTab('Following')}>
+          <Text style={[styles.navButtonText, activeTab === 'Following' && styles.activeNavButtonText]}>Following</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Search bar to filter trails */}
+      {/* Search bar for filtering trails */}
       <SearchBar
         placeholder="Find trails"
-        onChangeText={(text) => setSearch(sanitizeSearchQuery(text))} // Sanitize input
+        onChangeText={(text) => setSearch(sanitizeSearchQuery(text))}
         value={search}
         lightTheme
         round
@@ -88,36 +93,33 @@ export default function CommunityScreen() {
         inputContainerStyle={styles.searchBarInput}
       />
 
-      {/* Scrollable list of trail cards */}
+      {/* Trail list */}
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {trails
-          .filter((trail) => trail.name.toLowerCase().includes(search.toLowerCase())) // Filter results by sanitized search
-          .map((trail) => (
-            <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
-              <View style={styles.trailHeader}>
-                <Image source={trail.profilePic} style={styles.profilePicture} />
-                <View style={styles.trailHeaderText}>
-                  <Text style={styles.userName}>{trail.userName}</Text>
-                  <Text style={styles.date}>{trail.date}</Text>
-                </View>
+        {filteredTrails.map((trail) => (
+          <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
+            <View style={styles.trailHeader}>
+              <TouchableOpacity onPress={() => navigation.navigate('Profile', { user: trail.userName })}>
+                <Image source={trail.profilePic || defaultProfilePic} style={styles.profilePicture} />
+              </TouchableOpacity>
+              <View style={styles.trailHeaderText}>
+                <Text style={styles.userName}>{trail.userName}</Text>
+                <Text style={styles.date}>{trail.date}</Text>
               </View>
-              <Image source={trail.image || defaultImage} style={styles.trailImage} />
-              <Text style={styles.trailName}>{trail.name}</Text>
-              <Text style={styles.trailLocation}>
-                {trail.city}, {trail.state}
-              </Text>
-              <Text style={styles.trailDetails}>
-                <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} |{' '}
-                {trail.length} | {trail.time}
-              </Text>
-              <Text style={styles.trailDescription}>
-                {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
-              </Text>
-            </TouchableOpacity>
-          ))}
+            </View>
+            <Image source={trail.image || defaultImage} style={styles.trailImage} />
+            <Text style={styles.trailName}>{trail.name}</Text>
+            <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
+            <Text style={styles.trailDetails}>
+              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length} | {trail.time}
+            </Text>
+            <Text style={styles.trailDescription}>
+              {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
 
-      {/* Modal to show detailed trail information */}
+      {/* Trail detail modal */}
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
     </View>
   );
@@ -131,8 +133,7 @@ const styles = StyleSheet.create({
   navbar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: '#f8f8f8',
+    marginBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e1e1e1',
   },
@@ -142,6 +143,12 @@ const styles = StyleSheet.create({
   navButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'grey',
+  },
+  activeNavButtonText: {
+    color: '#000000',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FFC107',
   },
   searchBarContainer: {
     backgroundColor: 'transparent',
@@ -156,14 +163,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   scrollView: {
-    margin: -12,
+    marginHorizontal: -10,
   },
   trailContainer: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 10,
     marginVertical: 10,
-    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -214,5 +220,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'grey',
     marginTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
