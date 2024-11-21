@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
 import { fetchTrails } from '../service/trailService';
 import { AuthContext } from '../context/AuthContext';
 
 // Default Images
-const defaultImage = require('../assets/icon.png');
-const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
+
 
 export default function CommunityScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
@@ -15,8 +14,6 @@ export default function CommunityScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Local');
   const [trails, setTrails] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [trailLoading, setTrailLoading] = useState(false); // New state for trail loading
-  const [imagesLoaded, setImagesLoaded] = useState(0); // New state for tracking loaded images
   const { user } = useContext(AuthContext); // Access user from AuthContext
 
   useEffect(() => {
@@ -34,10 +31,8 @@ export default function CommunityScreen({ navigation }) {
   }, []);
 
   const openModal = (trail) => {
-    setTrailLoading(true); // Set trail loading to true
     setSelectedTrail(trail);
     setModalVisible(true);
-    setTrailLoading(false); // Set trail loading to false after setting the trail
   };
 
   const closeModal = () => {
@@ -54,10 +49,6 @@ export default function CommunityScreen({ navigation }) {
     return true;
   });
 
-  const handleImageLoad = () => {
-    setImagesLoaded((prev) => prev + 1);
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -73,14 +64,14 @@ export default function CommunityScreen({ navigation }) {
           <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
             <View style={styles.trailHeader}>
               <TouchableOpacity onPress={() => navigation.navigate('Profile', { user: trail.owner })}>
-                <Image source={{ uri: trail.owner.profilePicture }} style={styles.profilePicture} onLoad={handleImageLoad} />
+                <Image source={{ uri: trail.owner.profilePicture }} style={styles.profilePicture} />
               </TouchableOpacity>
               <View style={styles.trailHeaderText}>
                 <Text style={styles.userName}>{trail.owner.username}</Text>
                 <Text style={styles.date}>{trail.date}</Text>
               </View>
             </View>
-            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} onLoad={handleImageLoad} />
+            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
             <Text style={styles.trailName}>{trail.name}</Text>
             <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
             <Text style={styles.trailDetails}>
@@ -92,13 +83,6 @@ export default function CommunityScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </ScrollView>
-
-      {(trailLoading || imagesLoaded < filteredTrails.length * 2) && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text>Loading trail details...</Text>
-        </View>
-      )}
 
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
     </View>
@@ -199,15 +183,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
 });
