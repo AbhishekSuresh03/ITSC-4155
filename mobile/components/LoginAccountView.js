@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { loginUser } from '../service/authService';
 import { AuthContext } from '../context/AuthContext';
-import { sanitizeInput, validateUsername, validatePassword } from '../utils/sanitize.js';
+import { sanitizeInput } from '../utils/sanitize.js';
 
 export default function LoginAccountView({ navigation }) {
   const { login } = useContext(AuthContext); // Access login function from AuthContext
@@ -13,25 +13,6 @@ export default function LoginAccountView({ navigation }) {
     // Sanitize inputs
     const sanitizedUserName = sanitizeInput(userName);
     const sanitizedPassword = sanitizeInput(password);
-
-    // Validate inputs
-    if (!sanitizedUserName || !sanitizedPassword) {
-      Alert.alert('Error', 'Please enter both username and password.');
-      return;
-    }
-
-    if (!validateUsername(sanitizedUserName)) {
-      Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
-      return;
-    }
-
-    if (!validatePassword(sanitizedPassword)) {
-      Alert.alert(
-        'Invalid Password',
-        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
-      );
-      return;
-    }
 
     try {
       const userData = await loginUser(sanitizedUserName, sanitizedPassword); // Call backend to login
