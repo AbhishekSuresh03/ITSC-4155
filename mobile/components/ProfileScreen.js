@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 
 export default function ProfileScreen(){
   const [activeTab, setActiveTab] = useState('Feed');
+  const { user, logout } = useContext(AuthContext); // Access user and logout from AuthContext
   
+  const handleLogout = async () => {
+    await logout();
+    navigation.navigate('Main'); // mavigate to Login screen after logout
+  };
 
   const renderContent = () => {
       switch (activeTab) {
@@ -46,23 +52,35 @@ export default function ProfileScreen(){
                 return null;
       }
   };
-  
+  //ensuring user is logged in
+
+  if (!user) {
+    return (
+        //TODO: Update this to reference the login screen
+        // could merge the login screen with the profile screen to make it easier to navigate
+        //or just delete this if we show the login screen before the user can access the rest of the app
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={styles.message}>You are not logged in.</Text>
+        </View>
+    );
+}
+
   return(
     <ScrollView style={styles.container}>
-          <Image source={require('../assets/default-user-profile-pic.jpg')} style={styles.profilePicture} />
+          <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
           <View style={styles.nameContainer}>
-            <Text style={styles.name}> John Doe </Text>
-            <Text style={styles.location}> Kings Mountain, NC </Text>
+            <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+            <Text style={styles.location}>{user.city}, {user.state}</Text>
           </View>
           
           <View style={styles.followContainer}>
             <View style={styles.followers}>
-              <Text style={styles.followerNum}> 1 </Text>
-              <Text style={styles.followerText}> follower </Text>
+              <Text style={styles.followerNum}>{/*user.followers.length*/ 3}</Text>
+              <Text style={styles.followerText}>followers{/*user.followers.length !== 1 ? 's' : ''*/}</Text>
             </View>
             <View style={styles.following}>
-              <Text style={styles.followingNum}> 1 </Text>
-              <Text style={styles.followingText}> following </Text>
+              <Text style={styles.followingNum}>4{/*user.following.length*/}</Text>
+              <Text style={styles.followingText}>following</Text>
             </View>
           </View>
 
@@ -71,40 +89,38 @@ export default function ProfileScreen(){
 
             <View style={styles.dataYearStatContainer}>
               <View style={styles.actContainer}>
-                <Text style={styles.actNum}>2</Text>
+                <Text style={styles.actNum}>{/*user.activities.length*/5}</Text>
                 <Text style={styles.act}>Activities</Text>
               </View>
               <View style={styles.mileContainer}>
-                <Text style={styles.mileNum}>4</Text>
+                <Text style={styles.mileNum}>{user.miles}</Text>
                 <Text style={styles.mile}>Miles</Text>
               </View>
             </View>
-
           </View>
 
-        <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
-          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
-            <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
-            <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
-            <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
-            <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
-          </TouchableOpacity>    
-          <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
-            <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
-          </TouchableOpacity>
-        </ScrollView>
+          <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
+            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
+              <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
+              <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
+              <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
+              <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
+            </TouchableOpacity>    
+            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
+              <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
+            </TouchableOpacity>
+          </ScrollView>
         
-
-            <View style={styles.bottomHalf}>
-                {renderContent()}
-            </View>
-            </ScrollView>
+          <View style={styles.bottomHalf}>
+              {renderContent()}
+          </View>
+      </ScrollView>
     );
 }
 
