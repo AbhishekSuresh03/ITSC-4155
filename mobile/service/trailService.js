@@ -1,4 +1,7 @@
-const BASE_URL = 'http://10.106.8.53:8080/trails'; // Update with your actual backend URL
+import {
+    PRODUCTION_BACKEND_URL
+  } from "@env"; // Import environment variables
+const BASE_URL = `${PRODUCTION_BACKEND_URL}/trails`;
 
 export async function fetchTrails() {
     try {

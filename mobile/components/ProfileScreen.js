@@ -73,16 +73,7 @@ export default function ProfileScreen(){
             <Text style={styles.location}>{user.city}, {user.state}</Text>
           </View>
           
-          <View style={styles.followContainer}>
-            <View style={styles.followers}>
-              <Text style={styles.followerNum}>{/*user.followers.length*/ 3}</Text>
-              <Text style={styles.followerText}>followers{/*user.followers.length !== 1 ? 's' : ''*/}</Text>
-            </View>
-            <View style={styles.following}>
-              <Text style={styles.followingNum}>4{/*user.following.length*/}</Text>
-              <Text style={styles.followingText}>following</Text>
-            </View>
-          </View>
+          
 
           <View style={styles.yearStatsContainer}>
             <Text style={styles.yearStatText}>2024 Stats</Text>
