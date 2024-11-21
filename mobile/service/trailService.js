@@ -37,6 +37,26 @@ export async function fetchTrailById(id) {
     }
 }
 
+export async function fetchTrailsByUserId(userId) {
+    try {
+        const response = await fetch(`${BASE_URL}/user/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        const responseText = await response.text();
+        console.log('API Response:', responseText); // Log the raw response text
+        if (!response.ok) {
+            throw new Error(responseText);
+        }
+        return JSON.parse(responseText); // Parse the response text as JSON
+    } catch (error) {
+        console.error('Error fetching trails by user ID:', error);
+        throw error;
+    }
+}
+
 export async function createTrail(formData, userId) {
     try {
         const response = await fetch(`${BASE_URL}?ownerId=${userId}`, {
