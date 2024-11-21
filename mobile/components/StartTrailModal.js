@@ -124,6 +124,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     backgroundColor: '#fff',
+    paddingTop: 50, // Add padding to the top
+  },
+  innerContainer: {
+    paddingTop: 50, // Add padding to the top
   },
   input: {
     height: 40,
