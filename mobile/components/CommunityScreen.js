@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
+import { sanitizeSearchQuery } from '../utils/sanitize.js';
 
 // Default images for trail and profile picture
 const defaultImage = require('../assets/icon.png');
@@ -79,7 +80,7 @@ export default function CommunityScreen() {
       {/* Search bar to filter trails */}
       <SearchBar
         placeholder="Find trails"
-        onChangeText={setSearch}
+        onChangeText={(text) => setSearch(sanitizeSearchQuery(text))} // Sanitize input
         value={search}
         lightTheme
         round
@@ -89,27 +90,31 @@ export default function CommunityScreen() {
 
       {/* Scrollable list of trail cards */}
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {trails.map((trail) => (
-          // Each trail card is a touchable component that opens the modal with detailed trail info
-          <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
-            <View style={styles.trailHeader}>
-              <Image source={trail.profilePic} style={styles.profilePicture} />
-              <View style={styles.trailHeaderText}>
-                <Text style={styles.userName}>{trail.userName}</Text>
-                <Text style={styles.date}>{trail.date}</Text>
+        {trails
+          .filter((trail) => trail.name.toLowerCase().includes(search.toLowerCase())) // Filter results by sanitized search
+          .map((trail) => (
+            <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
+              <View style={styles.trailHeader}>
+                <Image source={trail.profilePic} style={styles.profilePicture} />
+                <View style={styles.trailHeaderText}>
+                  <Text style={styles.userName}>{trail.userName}</Text>
+                  <Text style={styles.date}>{trail.date}</Text>
+                </View>
               </View>
-            </View>
-            <Image source={trail.image ? trail.image : defaultImage} style={styles.trailImage} />
-            <Text style={styles.trailName}>{trail.name}</Text>
-            <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
-            <Text style={styles.trailDetails}>
-              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length} | {trail.time}
-            </Text>
-            <Text style={styles.trailDescription}>
-        {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
-      </Text>
-          </TouchableOpacity>
-        ))}
+              <Image source={trail.image || defaultImage} style={styles.trailImage} />
+              <Text style={styles.trailName}>{trail.name}</Text>
+              <Text style={styles.trailLocation}>
+                {trail.city}, {trail.state}
+              </Text>
+              <Text style={styles.trailDetails}>
+                <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} |{' '}
+                {trail.length} | {trail.time}
+              </Text>
+              <Text style={styles.trailDescription}>
+                {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
       </ScrollView>
 
       {/* Modal to show detailed trail information */}
@@ -163,7 +168,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
-    elevation: 1, 
+    elevation: 1,
   },
   trailHeader: {
     flexDirection: 'row',

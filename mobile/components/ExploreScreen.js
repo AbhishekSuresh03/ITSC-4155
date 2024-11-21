@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
-const defaultImage = require('../assets/icon.png'); 
+import { sanitizeSearchQuery } from '../utils/sanitize.js';
+const defaultImage = require('../assets/icon.png');
 
 
 export default function CommunityScreen() {
@@ -36,7 +37,7 @@ export default function CommunityScreen() {
     <View style={styles.container}>
       <SearchBar
         placeholder="Find trails"
-        onChangeText={setSearch}
+        onChangeText={(text) => setSearch(sanitizeSearchQuery(text))} // Sanitize input
         value={search}
         lightTheme
         round
@@ -44,16 +45,21 @@ export default function CommunityScreen() {
         inputContainerStyle={styles.searchBarInput}
       />
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {trails.map((trail) => (
-          <View key={trail.id} style={styles.trailContainer}>
-            <Image source={trail.image ? trail.image : defaultImage} style={styles.trailImage} />
-            <Text style={styles.trailName}>{trail.name}</Text>
-            <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
-            <Text style={styles.trailDetails}>
-              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length} | {trail.time}
-            </Text>
-          </View>
-        ))}
+        {trails
+          .filter((trail) => trail.name.toLowerCase().includes(search.toLowerCase())) // Filter results by sanitized search
+          .map((trail) => (
+            <View key={trail.id} style={styles.trailContainer}>
+              <Image source={trail.image || defaultImage} style={styles.trailImage} />
+              <Text style={styles.trailName}>{trail.name}</Text>
+              <Text style={styles.trailLocation}>
+                {trail.city}, {trail.state}
+              </Text>
+              <Text style={styles.trailDetails}>
+                <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} |{' '}
+                {trail.length} | {trail.time}
+              </Text>
+            </View>
+          ))}
       </ScrollView>
     </View>
   );
@@ -90,7 +96,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
-    elevation: 1, 
+    elevation: 1,
   },
   trailImage: {
     width: '100%',

@@ -1,44 +1,29 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { loginUser } from '../service/authService'; // Adjust the import path as needed
-
+import { sanitizeInput, validateUsername, validatePassword } from '../utils/sanitize.js';
 
 export default function LoginAccountView({ navigation }) {
   const [userName, setUserName] = useState('');
   const [password, setPassword] = useState('');
 
-  // sanitize and trim
-  const sanitizeInput = (input) => {
-    return input.replace(/[^\w\s]/gi, '').trim();
-  };
-
-  // validate username and password format
-  const isUsernameValid = (userName) => {
-    const usernameRegex = /^[a-zA-Z0-9]{3,20}$/; // alphanumeric, 3-20 characters
-    return usernameRegex.test(userName);
-  };
-
-  const isPasswordValid = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,50}$/;
-    return passwordRegex.test(password);
-  };
-
   const handleLogin = async () => {
+    // Sanitize inputs
     const sanitizedUserName = sanitizeInput(userName);
     const sanitizedPassword = sanitizeInput(password);
 
-    // validate before making request
+    // Validate inputs
     if (!sanitizedUserName || !sanitizedPassword) {
       Alert.alert('Error', 'Please enter both username and password.');
       return;
     }
 
-    if (!isUsernameValid(sanitizedUserName)) {
+    if (!validateUsername(sanitizedUserName)) {
       Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
       return;
     }
 
-    if (!isPasswordValid(sanitizedPassword)) {
+    if (!validatePassword(sanitizedPassword)) {
       Alert.alert(
         'Invalid Password',
         'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
@@ -64,7 +49,7 @@ export default function LoginAccountView({ navigation }) {
         style={styles.input}
         placeholder="User Name"
         value={userName}
-        onChangeText={(text) => setUserName(sanitizeInput(text))}
+        onChangeText={setUserName}
         maxLength={20}
       />
 
@@ -73,7 +58,7 @@ export default function LoginAccountView({ navigation }) {
         placeholder="Password"
         value={password}
         secureTextEntry
-        onChangeText={(text) => setPassword(sanitizeInput(text))}
+        onChangeText={setPassword}
         maxLength={50}
       />
 
@@ -85,7 +70,6 @@ export default function LoginAccountView({ navigation }) {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

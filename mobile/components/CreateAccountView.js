@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert, RootTagContext } from 'react-native';
+import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { createUser } from '../service/authService'; // Adjust the import path as needed
-
+import {
+    sanitizeInput,
+    validateUsername,
+    validateEmail,
+    validatePassword,
+    validateName
+} from '../utils/sanitize.js';
 
 export default function CreateAccountView({ navigation }) {
     const [username, setUsername] = useState('');
@@ -10,44 +16,36 @@ export default function CreateAccountView({ navigation }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    // sanitize and trim
-    const sanitizeInput = (input) => {
-        return input.replace(/[^\w\s]/gi, '').trim();
-    };
-
-    // validation
-    const isUsernameValid = (username) => /^[a-zA-Z0-9]{3,20}$/.test(username); // alphanumeric, 3-20 characters
-
-    const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); // basic email format
-
-    const isPasswordValid = (password) => /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,50}$/.test(password); // at least 1 uppercase, 1 lowercase, 1 number, 8-50 characters
-
-
     const handleCreateAccount = async () => {
-        // sanitize
+        // Sanitize inputs
         const sanitizedUsername = sanitizeInput(username);
         const sanitizedFirstName = sanitizeInput(firstName);
         const sanitizedLastName = sanitizeInput(lastName);
         const sanitizedEmail = sanitizeInput(email);
         const sanitizedPassword = sanitizeInput(password);
 
-        // validate
+        // Validate inputs
         if (!sanitizedUsername || !sanitizedFirstName || !sanitizedLastName || !sanitizedEmail || !sanitizedPassword) {
             Alert.alert('Error', 'All fields are required.');
             return;
         }
 
-        if (!isUsernameValid(sanitizedUsername)) {
+        if (!validateUsername(sanitizedUsername)) {
             Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
             return;
         }
 
-        if (!isEmailValid(sanitizedEmail)) {
+        if (!validateName(sanitizedFirstName) || !validateName(sanitizedLastName)) {
+            Alert.alert('Invalid Name', 'Names should only contain letters, spaces, and hyphens.');
+            return;
+        }
+
+        if (!validateEmail(sanitizedEmail)) {
             Alert.alert('Invalid Email', 'Please enter a valid email address.');
             return;
         }
 
-        if (!isPasswordValid(sanitizedPassword)) {
+        if (!validatePassword(sanitizedPassword)) {
             Alert.alert(
                 'Invalid Password',
                 'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
@@ -60,22 +58,20 @@ export default function CreateAccountView({ navigation }) {
             navigation.navigate('Main');
             console.log(userData);
         } catch (error) {
-            console.error('Create account error:', error.message); // This will log to the browser console
+            console.error('Create account error:', error.message);
             Alert.alert('Account could not be created', error.message);
         }
-
     };
-
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}> Create Account </Text>
+            <Text style={styles.title}>Create Account</Text>
 
             <TextInput
                 style={styles.input}
                 placeholder="User Name"
                 value={username}
-                onChangeText={(text) => setUsername(sanitizeInput(text))}
+                onChangeText={setUsername}
                 maxLength={20}
             />
 
@@ -83,21 +79,21 @@ export default function CreateAccountView({ navigation }) {
                 style={styles.input}
                 placeholder="First Name"
                 value={firstName}
-                onChangeText={(text) => setFirstName(sanitizeInput(text))}
+                onChangeText={setFirstName}
             />
 
             <TextInput
                 style={styles.input}
                 placeholder="Last Name"
                 value={lastName}
-                onChangeText={(text) => setLastName(sanitizeInput(text))}
+                onChangeText={setLastName}
             />
 
             <TextInput
                 style={styles.input}
                 placeholder="Email"
                 value={email}
-                onChangeText={(text) => setEmail(text.trim())}
+                onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
@@ -107,7 +103,7 @@ export default function CreateAccountView({ navigation }) {
                 placeholder="Password"
                 value={password}
                 secureTextEntry
-                onChangeText={(text) => setPassword(sanitizeInput(text))}
+                onChangeText={setPassword}
                 maxLength={50}
             />
 
@@ -119,7 +115,6 @@ export default function CreateAccountView({ navigation }) {
         </View>
     );
 }
-
 
 const styles = StyleSheet.create({
     container: {
