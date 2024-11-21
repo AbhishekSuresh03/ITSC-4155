@@ -4,9 +4,11 @@ import com.placeholder.trailblazer.model.User;
 import com.placeholder.trailblazer.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -33,8 +35,13 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping
-    public User create(@RequestBody User user) {
-        return userService.createUser(user);
+    public ResponseEntity<?> create(@RequestBody User user) {
+        try {
+            User createdUser = userService.createUser(user);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @PutMapping(value = "/{id}")
@@ -47,5 +54,23 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         userService.deleteUser(id);
+    }
+
+    @CrossOrigin
+    @PostMapping("/login")
+    public ResponseEntity<User> login(@RequestBody Map<String, String> credentials) {
+        String username = credentials.get("username");
+        String password = credentials.get("password");
+        User user = userService.findByUsername(username);
+        System.out.println(username);
+        System.out.println(password);
+        System.out.println(user);
+        if (user != null && userService.checkPassword(password, user.getPassword())) {
+            System.out.println(user);
+            return ResponseEntity.ok(user);
+        } else {
+            System.out.println("bad request");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 }
