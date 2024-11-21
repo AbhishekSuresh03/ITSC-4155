@@ -74,7 +74,7 @@ export default function CommunityScreen({ navigation }) {
           <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
             <View style={styles.trailHeader}>
               <TouchableOpacity onPress={() => navigation.navigate('Profile', { user: users.find(user => user.userName === trail.userName) })}>
-                <Image source={trail.profilePic} style={styles.profilePicture} />
+                <Image source={{ uri: trails.profilePicture }} style={styles.profilePicture} />
               </TouchableOpacity>
               <View style={styles.trailHeaderText}>
                 <Text style={styles.userName}>{trail.userName}</Text>
