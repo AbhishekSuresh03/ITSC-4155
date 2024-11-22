@@ -26,7 +26,7 @@ export default function ProfileScreen({ navigation }) {
       }
     };
     loadTrails();
-  }, [/*user.id,*/ navigation]);
+  }, [navigation]);
 
   const handleLogout = async () => {
     try {
@@ -99,12 +99,7 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
         <Text style={styles.location}>{user.city}, {user.state}</Text>
       </View>
-{/* 
-      <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
-      <View style={styles.nameContainer}>
-        <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
-        <Text style={styles.location}>{user.city}, {user.state}</Text>
-      </View> */}
+
       
       <View style={styles.followContainer}>
         <View style={styles.followers}>
