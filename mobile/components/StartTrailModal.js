@@ -1,201 +1,182 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Button, Alert, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
-import Modal from 'react-native-modal';
-import { Slider } from 'react-native-paper';
 
-const TrailApp = () => {
-    const [userLocation, setUserLocation] = useState(null);
-    const [tracking, setTracking] = useState(false);
-    const [startTime, setStartTime] = useState(null);
-    const [endTime, setEndTime] = useState(null);
-    const [distance, setDistance] = useState(0);
-    const [trailName, setTrailName] = useState('');
-    const [city, setCity] = useState('');
-    const [state, setState] = useState('');
-    const [rating, setRating] = useState(5); // Default rating is 5
-    const [isModalVisible, setIsModalVisible] = useState(false);
+const StartTrailModal = () => {
+  const [location, setLocation] = useState(null); // User's current location
+  const [trailActive, setTrailActive] = useState(false); // Whether the trail is active
+  const [trailStartLocation, setTrailStartLocation] = useState(null); // Starting point of the trail
+  const [distanceTraveled, setDistanceTraveled] = useState(0); // Distance covered in miles
+  const [elapsedTime, setElapsedTime] = useState(0); // Elapsed time in seconds
+  const [intervalId, setIntervalId] = useState(null); // Timer interval ID
+  const [loading, setLoading] = useState(true); // Loading state for location
 
-    useEffect(() => {
-        (async () => {
-            //might need this, might not...
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                console.log('Permission to access location was denied');
-                return;
+  // Request location permissions
+  const getLocationPermission = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Permission to access location was denied.');
+      return false;
+    }
+    return true;
+  };
+
+  // Fetch the user's current location
+  const fetchLocation = async () => {
+    try {
+      const hasPermission = await getLocationPermission();
+      if (!hasPermission) return null;
+
+      const location = await Location.getCurrentPositionAsync({});
+      return location.coords;
+    } catch (error) {
+      console.error('Error fetching location:', error);
+      return null;
+    }
+  };
+
+  // Initialize location on page load
+  useEffect(() => {
+    const initializeLocation = async () => {
+      const initialLocation = await fetchLocation();
+      if (initialLocation) setLocation(initialLocation);
+      setLoading(false);
+    };
+    initializeLocation();
+  }, []);
+
+  // Start tracking the trail
+  const startTrail = async () => {
+    const currentLocation = await fetchLocation();
+    if (!currentLocation) return;
+
+    setTrailStartLocation(currentLocation);
+    setLocation(currentLocation);
+    setTrailActive(true);
+
+    // Start the timer
+    const timerId = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
+    setIntervalId(timerId);
+  };
+
+  // End the trail
+  const endTrail = () => {
+    setTrailActive(false);
+    setTrailStartLocation(null);
+    setElapsedTime(0);
+    setDistanceTraveled(0);
+
+    // Clear the timer
+    clearInterval(intervalId);
+    setIntervalId(null);
+  };
+
+  // Calculate distance between two locations (Haversine formula, converted to miles)
+  const calculateDistance = (loc1, loc2) => {
+    const toRad = (value) => (value * Math.PI) / 180;
+    const R = 3958.8; // Earth's radius in miles
+
+    const dLat = toRad(loc2.latitude - loc1.latitude);
+    const dLon = toRad(loc2.longitude - loc1.longitude);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(loc1.latitude)) *
+        Math.cos(toRad(loc2.latitude)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in miles
+  };
+
+  // Track the user's location while the trail is active
+  useEffect(() => {
+    let locationSubscription;
+    if (trailActive) {
+      const watchLocation = async () => {
+        locationSubscription = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.High, distanceInterval: 5 }, // Update every 5 meters
+          (newLocation) => {
+            if (location) {
+              const distance = calculateDistance(location, newLocation.coords);
+              setDistanceTraveled((prevDistance) => prevDistance + distance);
             }
+            setLocation(newLocation.coords);
+          }
+        );
+      };
+      watchLocation();
+    }
 
-            let location = await Location.getCurrentPositionAsync({});
-            setUserLocation(location.coords);
-            setCity('Sample City'); // Replace with dynamic city based on location if needed
-            setState('Sample State'); // Replace with dynamic state based on location if needed
-        })();
-    }, []);
-
-    // Haversine formula to calculate distance between two lat/lng points (in miles)
-    const calculateDistance = (startCoords, endCoords) => {
-        const toRadians = (degree) => degree * (Math.PI / 180);
-        const R = 3958.8; // Radius of the Earth in miles
-
-        const dLat = toRadians(endCoords.latitude - startCoords.latitude);
-        const dLon = toRadians(endCoords.longitude - startCoords.longitude);
-        const lat1 = toRadians(startCoords.latitude);
-        const lat2 = toRadians(endCoords.latitude);
-
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1) * Math.cos(lat2) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in miles
+    return () => {
+      if (locationSubscription) locationSubscription.remove();
     };
+  }, [trailActive, location]);
 
-    const startTrail = () => {
-        setTracking(true);
-        setStartTime(new Date());
-    };
-
-    const endTrail = () => {
-        setTracking(false);
-        setEndTime(new Date());
-        const timeTaken = (new Date() - startTime) / 1000 / 60; // Time in minutes
-        if (userLocation) {
-            const trailDistance = calculateDistance(userLocation, userLocation); // Replace with real path coordinates
-            setDistance(trailDistance);
-        }
-        setIsModalVisible(true);
-    };
-
-    const submitTrail = () => {
-        // Handle form submission logic
-        console.log({
-            trailName,
-            city,
-            state,
-            timeTaken: (endTime - startTime) / 1000 / 60, // Time in minutes
-            distance,
-            rating,
-        });
-
-        // Close modal after submission
-        setIsModalVisible(false);
-    };
-
-    return (
-        <View style={{ flex: 1 }}>
+  return (
+    <View style={styles.container}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          {location && (
             <MapView
-                style={{ flex: 1 }}
-                initialRegion={{
-                    latitude: userLocation ? userLocation.latitude : 37.78825,
-                    longitude: userLocation ? userLocation.longitude : -122.4324,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                }}
+              style={styles.map}
+              initialRegion={{
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
             >
-                {userLocation && (
-                    <Marker coordinate={{ latitude: userLocation.latitude, longitude: userLocation.longitude }} />
-                )}
+              {trailStartLocation && (
+                <Marker coordinate={trailStartLocation} title="Start Point" />
+              )}
+              <Marker coordinate={location} title="Your Location" />
             </MapView>
-
-            <View style={{ position: 'absolute', bottom: 50, left: 20, right: 20 }}>
-                <Button
-                    title={tracking ? 'End Trail' : 'Start Trail'}
-                    onPress={tracking ? endTrail : startTrail}
-                />
-            </View>
-
-            {/* Modal for submitting the trail */}
-            <Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)}>
-                <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10 }}>
-                    <TextInput
-                        placeholder="Trail Name"
-                        value={trailName}
-                        onChangeText={setTrailName}
-                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                    />
-                    <TextInput
-                        placeholder="City"
-                        value={city}
-                        editable={false} // City is auto-populated
-                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                    />
-                    <TextInput
-                        placeholder="State"
-                        value={state}
-                        editable={false} // State is auto-populated
-                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                    />
-                    <TextInput
-                        placeholder="Time Taken (Minutes)"
-                        value={((endTime - startTime) / 1000 / 60).toFixed(2)}
-                        editable={false} // Time is auto-populated
-                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                    />
-                    <TextInput
-                        placeholder="Distance (Miles)"
-                        value={distance.toFixed(2)}
-                        editable={false} // Distance is auto-populated
-                        style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                    />
-                    <Text>Rating: {rating}</Text>
-                    <Slider
-                        value={rating}
-                        onValueChange={setRating}
-                        minimumValue={1}
-                        maximumValue={10}
-                        step={1}
-                        style={{ marginBottom: 20 }}
-                    />
-                    <TouchableOpacity onPress={submitTrail}>
-                        <Text style={{ textAlign: 'center', color: 'blue' }}>Submit Trail</Text>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
-        </View>
+          )}
+          <View style={styles.infoContainer}>
+            {trailActive && (
+              <>
+                <Text style={styles.infoText}>
+                  Distance Traveled: {distanceTraveled.toFixed(2)} miles
+                </Text>
+                <Text style={styles.infoText}>
+                  Elapsed Time: {Math.floor(elapsedTime / 60)} min {elapsedTime % 60} sec
+                </Text>
+              </>
+            )}
+            {trailActive ? (
+              <Button title="End Trail" onPress={endTrail} />
+            ) : (
+              <Button title="Start Trail" onPress={startTrail} />
+            )}
+          </View>
+        </>
+      )}
+    </View>
   );
-}
-export default TrailApp;
+};
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#fff',
-    paddingTop: 50, // Add padding to the top
+    flex: 1,
   },
-  innerContainer: {
-    paddingTop: 50, // Add padding to the top
+  map: {
+    flex: 1,
+    width: '100%',
   },
-  input: {
-    height: 40,
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 5,
-    paddingLeft: 8,
-    marginBottom: 10,
+  infoContainer: {
+    padding: 20,
+    width: '100%',
+    backgroundColor: 'white',
   },
-  imageContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginVertical: 10,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
-    marginBottom: 10,
-  },
-  uploadedImagesContainer: {
-    marginTop: 20,
-  },
-  uploadedImagesTitle: {
+  infoText: {
     fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 10,
-  },
-  uploadedImage: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
   },
 });
+
+export default StartTrailModal;
