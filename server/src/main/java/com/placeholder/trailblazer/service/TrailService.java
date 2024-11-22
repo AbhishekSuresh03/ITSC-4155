@@ -30,6 +30,7 @@ public class TrailService {
 
         // Set only the required fields in the owner object
         User ownerInfo = new User();
+        ownerInfo.setId(owner.getId());
         ownerInfo.setUsername(owner.getUsername());
         ownerInfo.setFirstName(owner.getFirstName());
         ownerInfo.setLastName(owner.getLastName());

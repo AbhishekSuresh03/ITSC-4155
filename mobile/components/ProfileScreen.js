@@ -21,6 +21,7 @@ export default function ProfileScreen({ navigation }) {
         setTrails(fetchedTrails);
         const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0); // Ensure trail.length is a number
         setTotalMiles(miles);
+      
       } catch (error) {
         console.error('Error fetching trails:', error);
       }
@@ -47,13 +48,27 @@ export default function ProfileScreen({ navigation }) {
             <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
           </View>
         );
-      case 'Photos':
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No photos to currently display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
-        );
+        case 'Photos':
+          return (
+              <View style={styles.contentContainer}>
+                  {trails.length === 0 ? (
+                      <>
+                          <Text style={styles.contentText}>No photos to currently display!</Text>
+                          <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+                      </>
+                  ) : (
+                      <ScrollView contentContainerStyle={styles.photosContainer}>
+                          {trails.map((trail) => (
+                              <View key={trail.id} style={styles.trailContainer}>
+                                  {trail.images.map((image, index) => (
+                                      <Image key={index} source={{ uri: image }} style={styles.trailImage} />
+                                  ))}
+                              </View>
+                          ))}
+                      </ScrollView>
+                  )}
+              </View>
+          );
       case 'Reviews':
         return (
           <View style={styles.contentContainer}>
@@ -69,12 +84,30 @@ export default function ProfileScreen({ navigation }) {
           </View>
         );
       case 'Completed':
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No completed trails to display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
-        );
+          return (
+              <View style={styles.contentContainer}>
+                  {trails.length === 0 ? (
+                      <>
+                          <Text style={styles.contentText}>No completed trails to display!</Text>
+                          <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+                      </>
+                  ) : (
+                      <ScrollView contentContainerStyle={styles.cardsContainer}>
+                          {trails.map((trail) => (
+                              <View key={trail.id} style={styles.trailCard}>
+                                  <Image source={{ uri: trail.primaryImage }} style={styles.trailCardImage} />
+                                  <View style={styles.trailCardContent}>
+                                      <Text style={styles.trailCardTitle}>{trail.name}</Text>
+                                      <Text style={styles.trailCardSubtitle}>{trail.city}, {trail.state}</Text>
+                                      <Text style={styles.trailCardRating}>Rating: {trail.rating}</Text>
+                                      <Text style={styles.trailCardDifficulty}>Difficulty: {trail.difficulty}</Text>
+                                  </View>
+                              </View>
+                          ))}
+                      </ScrollView>
+                  )}
+              </View>
+          );
       default:
         return null;
     }
@@ -310,5 +343,59 @@ logoutButtonText: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
-  }
+  },
+  photosContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+    },
+    trailContainer: {
+        margin: 10,
+    },
+    trailImage: {
+        width: 100,
+        height: 100,
+        margin: 5,
+        borderRadius: 10,
+    },
+    cardsContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+    },
+    trailCard: {
+        width: 200,
+        margin: 10,
+        borderRadius: 10,
+        overflow: 'hidden',
+        backgroundColor: '#fff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 2,
+        elevation: 5,
+    },
+    trailCardImage: {
+        width: '100%',
+        height: 120,
+    },
+    trailCardContent: {
+        padding: 10,
+    },
+    trailCardTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    trailCardSubtitle: {
+        fontSize: 14,
+        color: 'gray',
+    },
+    trailCardRating: {
+        fontSize: 14,
+        marginTop: 5,
+    },
+    trailCardDifficulty: {
+        fontSize: 14,
+        marginTop: 5,
+    },
 });
