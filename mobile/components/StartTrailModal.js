@@ -17,12 +17,19 @@ const TrailApp = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     useEffect(() => {
-        // Request location permissions and set initial user location
-        navigator.geolocation.getCurrentPosition((position) => {
-            setUserLocation(position.coords);
+        (async () => {
+            //might need this, might not...
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                console.log('Permission to access location was denied');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            setUserLocation(location.coords);
             setCity('Sample City'); // Replace with dynamic city based on location if needed
             setState('Sample State'); // Replace with dynamic state based on location if needed
-        });
+        })();
     }, []);
 
     // Haversine formula to calculate distance between two lat/lng points (in miles)
