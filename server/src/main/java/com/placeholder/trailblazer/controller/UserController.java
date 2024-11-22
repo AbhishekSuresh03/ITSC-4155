@@ -73,4 +73,15 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
+
+    @PostMapping("/{currentUserId}/unfollow/{userIdToUnfollow}")
+    public ResponseEntity<User> unfollowUser(@PathVariable String currentUserId, @PathVariable String userIdToUnfollow) {
+        User updatedUser = userService.unfollowUser(currentUserId, userIdToUnfollow);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+    @PostMapping("/{currentUserId}/follow/{userIdToFollow}")
+    public ResponseEntity<User> followUser(@PathVariable String currentUserId, @PathVariable String userIdToFollow) {
+        User updatedUser = userService.followUser(currentUserId, userIdToFollow);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
 }

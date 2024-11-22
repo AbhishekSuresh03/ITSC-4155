@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { getAllUsers } from '../service/userService';
+import React, { useState, useEffect, useContext } from 'react';
+import {followUser} from '../service/followService';
+import { AuthContext } from '../context/AuthContext';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
 // const users = [
@@ -34,6 +36,7 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState(users);
+  const { user } = useContext(AuthContext); 
 
   //get all users from the backend
   useEffect(() => {
@@ -50,6 +53,15 @@ export default function ExploreScreen() {
 
     fetchUsers();
   }, []);
+
+  const handleFollow = async (userIdToFollow) => {
+    try{
+      const response= await followUser(user.id, userIdToFollow);
+    
+    } catch (error){
+      console.error('Error following user:', error.message);
+    }
+  };
 
   const handleSearch = (text) => {
     setSearch(text);
@@ -75,6 +87,11 @@ export default function ExploreScreen() {
               <Text style={styles.username}>{user.username}</Text>
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
+              
+              <TouchableOpacity style={{ position: 'absolute', right: 0, backgroundColor: '#0095F6', borderRadius: 10, padding: 10 }} onPress={() => handleFollow(user.id)}>
+
+              <Text style={styles.followButtonText}>Follow</Text>
+              </TouchableOpacity>
             </View>
           </View>
         ))}
@@ -127,5 +144,22 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 12,
     color: 'gray',
+  },
+  followButton: {
+    backgroundColor: '#0095F6',
+    padding: 10,
+    borderRadius: 10
+  },
+  followButtonText:{
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  followingButton: {
+    backgroundColor: '#fff',
+    borderColor: '#0095F6',
+    borderWidth: 1,
+  },
+  followingButtonText: {
+    color: '#0095F6',
   },
 });
