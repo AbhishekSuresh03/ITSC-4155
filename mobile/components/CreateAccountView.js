@@ -30,6 +30,8 @@ export default function CreateAccountView({ navigation }) {
     email: '',
     password: '',
     profilePicture: '',
+    trails: [],
+    following: []
   });
 
   const handleInputChange = (name, value) => {
