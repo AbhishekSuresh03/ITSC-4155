@@ -11,7 +11,10 @@ export const AuthProvider = ({ children }) => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem('user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // Ensure homies is defined
+        parsedUser.homies = parsedUser.homies || [];
+        setUser(parsedUser);      
       }
       setIsLoading(false);
     };
@@ -19,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (userData) => {
+    userData.homies = userData.homies || [];
     setUser(userData);
     await AsyncStorage.setItem('user', JSON.stringify(userData));
   };

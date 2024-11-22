@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { getAllUsers, followUser } from '../service/userService';
+import { getAllUsers, followUser, unFollowUser } from '../service/userService';
 import { AuthContext } from '../context/AuthContext';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
@@ -13,7 +13,6 @@ export default function ExploreScreen() {
   const [followStatus, setFollowStatus] = useState({}); 
 
 
-
   //get all users from the backend
   useEffect(() => {
     const fetchUsers = async () => {
@@ -22,7 +21,7 @@ export default function ExploreScreen() {
         setUsers(usersData);
         setFilteredUsers(usersData);
       } catch (error) {
-        setUsers({});
+        setUsers([]);
         console.error('Failed to fetch users:', error);
       }
     };
@@ -76,7 +75,10 @@ export default function ExploreScreen() {
         onChangeText={handleSearch}
       />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {filteredUsers.map(user => (
+        {user.homies.length == 0 ? (
+          <Text style={styles.noUsersText}>You are not following anyone</Text>
+        ) : (
+          filteredUsers.map(user => (
           <View key={user.id} style={styles.userContainer}>
             <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
             <View style={styles.userInfo}>
@@ -99,7 +101,8 @@ export default function ExploreScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        ))}
+        ))
+      )}
       </ScrollView>
     </View>
   );
@@ -166,5 +169,11 @@ const styles = StyleSheet.create({
   },
   followingButtonText: {
     color: '#0095F6',
+  },
+  noUsersText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: 'red',
   },
 });

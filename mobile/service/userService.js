@@ -37,6 +37,7 @@ export async function followUser(currentUserId, userIdToFollow){
     }catch(error){
         throw error;
     }
+}
 
     export async function unFollowUser(currentUserId, userIdToFollow){
         try{
