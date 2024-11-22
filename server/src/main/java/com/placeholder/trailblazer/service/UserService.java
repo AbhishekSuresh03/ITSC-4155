@@ -82,6 +82,45 @@ public class UserService {
         existingUser.setTrails(newUser.getTrails());
     }
 
+    public User followUser(String currentUserId, String userIdToFollow) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + currentUserId));
+        User userToFollow = userRepository.findById(userIdToFollow)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + userIdToFollow));
+
+        // Create a new User object with only the required fields
+        User followingUser = new User();
+        followingUser.setId(userToFollow.getId());
+        followingUser.setFirstName(userToFollow.getFirstName());
+        followingUser.setLastName(userToFollow.getLastName());
+        followingUser.setEmail(userToFollow.getEmail());
+
+        // Add the user to the following list if not already present
+        // Check if the user is already in the following list by matching the id
+        boolean alreadyFollowing = currentUser.getFollowing().stream()
+                .anyMatch(user -> user.getId().equals(followingUser.getId()));
+
+        if (!alreadyFollowing) {
+            currentUser.getFollowing().add(followingUser);
+            userRepository.save(currentUser);
+        }
+
+        return currentUser;
+    }
+
+    public User unfollowUser(String currentUserId, String userIdToUnfollow) {
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + currentUserId));
+        User userToUnfollow = userRepository.findById(userIdToUnfollow)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + userIdToUnfollow));
+
+        // Remove the user from the following list if present
+        currentUser.getFollowing().removeIf(user -> user.getId().equals(userToUnfollow.getId()));
+        userRepository.save(currentUser);
+
+        return currentUser;
+    }
+
     // Encrypts a user's password using BCrypt
     private String hashPassword(String plainTextPassword) {
         return BCrypt.hashpw(plainTextPassword, BCrypt.gensalt());
