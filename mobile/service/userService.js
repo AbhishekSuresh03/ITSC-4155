@@ -56,3 +56,20 @@ export async function followUser(currentUserId, userIdToFollow){
             throw error;
         }
 }
+
+export async function getUser(userId) {
+    try {
+        const response = await fetch(`${BASE_URL}/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}

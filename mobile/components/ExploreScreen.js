@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { getAllUsers, followUser, unFollowUser } from '../service/userService';
+import { getAllUsers, followUser, unFollowUser, getUser } from '../service/userService';
 import { AuthContext } from '../context/AuthContext';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
@@ -9,9 +9,9 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState(users);
-  const { user } = useContext(AuthContext); 
+  const { user, setUser } = useContext(AuthContext); 
   const [followStatus, setFollowStatus] = useState({}); 
-
+  const following = undefined ? [''] : user.following ;
 
   //get all users from the backend
   useEffect(() => {
@@ -19,7 +19,8 @@ export default function ExploreScreen() {
       try {
         const usersData = await getAllUsers();
         setUsers(usersData);
-        setFilteredUsers(usersData);
+        const filteredUsersData = usersData.filter(u => u.id !== user.id);
+        setFilteredUsers(filteredUsersData);
       } catch (error) {
         setUsers([]);
         console.error('Failed to fetch users:', error);
@@ -31,6 +32,7 @@ export default function ExploreScreen() {
 
   const handleSearch = (text) => {
     setSearch(text);
+    console.log("username" + user.username);
     const filtered = users.filter(user =>
       user.username.toLowerCase().includes(text.toLowerCase())
     );
@@ -39,7 +41,8 @@ export default function ExploreScreen() {
 
   const handleFollow = async (userIdToFollow) => {
     try {
-      const isFollowing = user.homies.includes(userIdToFollow);
+      const isFollowing = user.following.includes(userIdToFollow);
+
       if (isFollowing) {
         // Unfollow the user
         const response = await unfollowUser(user.id, userIdToFollow);
@@ -75,10 +78,7 @@ export default function ExploreScreen() {
         onChangeText={handleSearch}
       />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {user.homies.length == 0 ? (
-          <Text style={styles.noUsersText}>You are not following anyone</Text>
-        ) : (
-          filteredUsers.map(user => (
+          {filteredUsers.map(user => (
           <View key={user.id} style={styles.userContainer}>
             <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
             <View style={styles.userInfo}>
@@ -89,20 +89,19 @@ export default function ExploreScreen() {
             <TouchableOpacity
               style={[
                 styles.followButton,
-                user.homies.includes(userToFollow.id) && styles.followingButton
+                user.following.includes(userToFollow.id) && styles.followingButton
               ]}
               onPress={() => handleFollow(userToFollow.id)}
             >
               <Text style={[
                 styles.followButtonText,
-                user.homies.includes(userToFollow.id) && styles.followingButtonText
+                user.following.includes(userToFollow.id) && styles.followingButtonText
               ]}>
-                {user.homies.includes(userToFollow.id) ? 'Following' : 'Follow'}
+                {user.following.includes(userToFollow.id) ? 'Following' : 'Follow'}
               </Text>
             </TouchableOpacity>
           </View>
-        ))
-      )}
+        ))}
       </ScrollView>
     </View>
   );
@@ -169,11 +168,5 @@ const styles = StyleSheet.create({
   },
   followingButtonText: {
     color: '#0095F6',
-  },
-  noUsersText: {
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
-    color: 'red',
-  },
+  }
 });
