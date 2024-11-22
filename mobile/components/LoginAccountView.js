@@ -49,18 +49,18 @@ export default function LoginAccountView({ navigation }) {
 
       <TextInput
         style={styles.input}
-        placeholder="User Name"
-        value={userName}
-        onChangeText={(text) => setUserName(sanitizeInput(text))} // Sanitize input as the user types
+        placeholder="Password"
+        secureTextEntry
+        value={password}
+        onChangeText={(text) => setPassword(sanitizeInput(text, 'password'))}
         maxLength={20}
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Password"
-        value={password}
-        secureTextEntry
-        onChangeText={(text) => setPassword(sanitizeInput(text))} // Sanitize input as the user types
+        placeholder="Email"
+        value={email}
+        onChangeText={(text) => setEmail(sanitizeInput(text, 'email'))}
         maxLength={50}
       />
 

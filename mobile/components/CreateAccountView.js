@@ -26,7 +26,8 @@ export default function CreateAccountView({ navigation }) {
   });
 
   const handleInputChange = (name, value) => {
-    setFormData({ ...formData, [name]: sanitizeInput(value) });
+    const sanitizedValue = sanitizeInput(value, name === 'email' ? 'email' : name === 'password' ? 'password' : '');
+    setFormData({ ...formData, [name]: sanitizedValue });
   };
 
   const handleNext = () => {
@@ -133,7 +134,7 @@ export default function CreateAccountView({ navigation }) {
               style={styles.input}
               placeholder="Email"
               value={formData.email}
-              onChangeText={(text) => handleInputChange('email', text)}
+              onChangeText={(text) => setFormData({ ...formData, email: text })}
             />
           </View>
         );
