@@ -82,10 +82,12 @@ public class UserController {
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
     @PostMapping("/{currentUserId}/follow/{userIdToFollow}")
-    public ResponseEntity<User> followUser(@PathVariable String currentUserId, @PathVariable String userIdToFollow) {
-        System.out.println("calling follow user");
-        User updatedUser = userService.followUser(currentUserId, userIdToFollow);
-        System.out.println(updatedUser);
-        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    public User followUser(@PathVariable String currentUserId, @PathVariable String userIdToFollow) {
+        return userService.followUser(currentUserId, userIdToFollow);
+    }
+
+    @GetMapping("/{userId}/following")
+    public List<User> getFollowingUsers(@PathVariable String userId) {
+        return userService.getFollowingUsers(userId);
     }
 }
