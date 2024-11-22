@@ -37,4 +37,21 @@ export async function followUser(currentUserId, userIdToFollow){
     }catch(error){
         throw error;
     }
+
+    export async function unFollowUser(currentUserId, userIdToFollow){
+        try{
+            const response = await fetch(`${BASE_URL}/${currentUserId}/unfollow/${userIdToFollow}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok){
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+            return await response.json();
+        }catch(error){
+            throw error;
+        }
 }

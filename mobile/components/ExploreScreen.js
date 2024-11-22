@@ -39,19 +39,31 @@ export default function ExploreScreen() {
   };
 
   const handleFollow = async (userIdToFollow) => {
-    try{
-      const response= await followUser(user.id, userIdToFollow);
-      if(response.success){
-        setFollowStatus((prevStatus) => ({
-          ...prevStatus,
-          [userIdToFollow]: true,
-        }));
+    try {
+      const isFollowing = user.homies.includes(userIdToFollow);
+      if (isFollowing) {
+        // Unfollow the user
+        const response = await unfollowUser(user.id, userIdToFollow);
+        if (response.success) {
+          // Fetch updated user data from the backend
+          const updatedUser = await getUser(user.id);
+          setUser(updatedUser);
+        } else {
+          console.error('Failed to unfollow user:', response.message);
+        }
       } else {
-      console.error('Failed to follow user:', response.message);
-    }
-    } catch (error){
-      console.error('Error following user:', error.message);
-
+        // Follow the user
+        const response = await followUser(user.id, userIdToFollow);
+        if (response.success) {
+          // Fetch updated user data from the backend
+          const updatedUser = await getUser(user.id);
+          setUser(updatedUser);
+        } else {
+          console.error('Failed to follow user:', response.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing user:', error.message);
     }
   };
 
@@ -72,12 +84,20 @@ export default function ExploreScreen() {
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
             </View>
-            <TouchableOpacity style={styles.followButton} onPress={() => handleFollow(user.id)}>
+            <TouchableOpacity
+              style={[
+                styles.followButton,
+                user.homies.includes(userToFollow.id) && styles.followingButton
+              ]}
+              onPress={() => handleFollow(userToFollow.id)}
+            >
               <Text style={[
                 styles.followButtonText,
-                followStatus[user.id] && styles.followingButtonText]}>
-                {followStatus[user.id] ? 'Following' : 'Follow'}</Text>
-          </TouchableOpacity>
+                user.homies.includes(userToFollow.id) && styles.followingButtonText
+              ]}>
+                {user.homies.includes(userToFollow.id) ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>

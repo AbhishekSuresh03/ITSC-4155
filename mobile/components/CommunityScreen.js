@@ -45,7 +45,7 @@ export default function CommunityScreen({ navigation }) {
     if (activeTab === 'Local') {
       return user && (trail.city === user.city || trail.state === user.state);
     } else if (activeTab === 'Following') {
-      return user && user.friends.includes(trail.userName);
+      return user && user.homies.includes(trail.userName);
     }
     return true;
   });
