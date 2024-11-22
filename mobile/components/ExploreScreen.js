@@ -1,39 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { getAllUsers } from '../service/userService';
+import { getAllUsers, followUser } from '../service/userService';
+import { AuthContext } from '../context/AuthContext';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
-// const users = [
-//   {
-//     id: 1,
-//     firstName: 'CJ',
-//     lastName: 'Carrier',
-//     userName: 'Cj_Carrier',
-//     email: 'cjcarrier7@gmail.com',
-//     password: '123',
-//     city: 'Charlotte',
-//     state: 'North Carolina',
-//     profilePic: defaultProfilePic,
-//     trails: ['1', '2', '3'],
-//   },
-//   {
-//     id: 2,
-//     firstName: 'John',
-//     lastName: 'Doe',
-//     userName: 'John_Doe',
-//     email: 'john.doe@example.com',
-//     password: 'password',
-//     city: 'New York',
-//     state: 'New York',
-//     profilePic: defaultProfilePic,
-//     trails: ['4', '5'],
-//   },
-// ];
 
 export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState(users);
+  const { user } = useContext(AuthContext); 
+  const [followStatus, setFollowStatus] = useState({}); 
+
+
 
   //get all users from the backend
   useEffect(() => {
@@ -59,6 +38,23 @@ export default function ExploreScreen() {
     setFilteredUsers(filtered);
   };
 
+  const handleFollow = async (userIdToFollow) => {
+    try{
+      const response= await followUser(user.id, userIdToFollow);
+      if(response.success){
+        setFollowStatus((prevStatus) => ({
+          ...prevStatus,
+          [userIdToFollow]: true,
+        }));
+      } else {
+      console.error('Failed to follow user:', response.message);
+    }
+    } catch (error){
+      console.error('Error following user:', error.message);
+
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -76,6 +72,12 @@ export default function ExploreScreen() {
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
             </View>
+            <TouchableOpacity style={styles.followButton} onPress={() => handleFollow(user.id)}>
+              <Text style={[
+                styles.followButtonText,
+                followStatus[user.id] && styles.followingButtonText]}>
+                {followStatus[user.id] ? 'Following' : 'Follow'}</Text>
+          </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -127,5 +129,22 @@ const styles = StyleSheet.create({
   location: {
     fontSize: 12,
     color: 'gray',
+  },
+  followButton: {
+    backgroundColor: '#0095F6',
+    padding: 10,
+    borderRadius: 10
+  },
+  followButtonText:{
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  followingButton: {
+    backgroundColor: '#fff',
+    borderColor: '#0095F6',
+    borderWidth: 1,
+  },
+  followingButtonText: {
+    color: '#0095F6',
   },
 });
