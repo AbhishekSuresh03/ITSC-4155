@@ -2,6 +2,9 @@ import React from 'react';
 import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Icon } from 'react-native-elements';
 
+const defaultImage = require('../assets/icon.png');
+const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
+
 export default function TrailDetailModal({ visible, onClose, trail }) {
   if (!trail) return null;
 
@@ -18,9 +21,9 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
             <Icon name="close" size={24} color="#fff" />
           </TouchableOpacity>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ width: '100%' }}>
-            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
+          <Image source={{uri: trail.primaryImage}} style={styles.trailImage} />
             <View style={styles.headerContainer}>
-              <Image source={{ uri: trail.owner.profilePicture }} style={styles.profilePicture} />
+              <Image source={{uri: trail.owner.profilePicture}} style={styles.profilePicture} />
               <Text style={styles.userName}>{trail.owner.username}</Text>
             </View>
             <Text style={styles.trailName}>{trail.name}</Text>
@@ -34,15 +37,10 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
                 <Text style={styles.infoItem}>Length: <Text style={styles.boldText}>{trail.length}</Text></Text>
                 <Text style={styles.infoItem}>Time: <Text style={styles.boldText}>{trail.time}</Text></Text>
                 <Text style={styles.infoItem}>Pace: <Text style={styles.boldText}>{trail.pace}</Text></Text>
-                <Text style={styles.infoItem}>Difficulty: <Text style={styles.boldText}>{trail.difficulty}</Text></Text>
+                <Text style={styles.infoItem}>difficulty: <Text style={styles.boldText}>{trail.difficulty}</Text></Text>
               </View>
               <Text style={styles.trailDescription}>{trail.description}</Text>
               <View style={styles.separator} />
-              <View style={styles.imagesContainer}>
-                {trail.images && trail.images.map((image, index) => (
-                  <Image key={index} source={{ uri: image }} style={styles.additionalImage} />
-                ))}
-              </View>
             </View>
           </ScrollView>
         </View>
@@ -66,16 +64,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
+  scrollViewContent: {
+    padding: -10,
+    },
   closeButton: {
     position: 'absolute',
     top: 45,
     left: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 10,
     zIndex: 1,
   },
   trailImage: {
     width: '100%',
     height: 320,
-    marginBottom: 15,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -90,32 +93,32 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   userName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 10,
+
   },
   trailName: {
-    fontSize: 38,
+    fontSize: 38, // Make the trail name even bigger
     fontWeight: 'bold',
-    marginTop: -10,
-    textAlign: 'left',
-    width: '100%',
-    marginLeft: 10,
+    marginTop: -10, // Adjust margin to make it closer to the header
+    textAlign: 'left', // Align text to the left
+    width: '100%', // Ensure it spans the full width
+    paddingHorizontal: 20, // Add padding to match the header
   },
   trailInfo: {
     padding: 20,
-    width: '100%',
+    width: '100%', // Ensure it spans the full width
   },
   ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', // Align star and rating number in a row
+    alignItems: 'center', // Center items vertically
     marginBottom: 10,
   },
   trailRating: {
     marginTop: 6,
-    fontSize: 20,
+    fontSize: 20, // Increased font size for the rating number
     color: 'grey',
-    marginLeft: 2,
+    marginLeft: 2, // Reduce space between the star and the rating number
   },
   separator: {
     height: 1,
@@ -128,6 +131,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+  
+  trailDescription: {
+    fontSize: 14,
+    color: 'grey',
+    marginTop: 25,
+    marginBottom: 10,
+    textAlign: 'left', // Align text to the left
+    paddingHorizontal: 0, // Add padding to match the header
+  },
   infoItem: {
     marginBottom: 10,
     flexDirection: 'row',
@@ -135,25 +147,5 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold',
-  },
-  trailDescription: {
-    fontSize: 14,
-    color: 'grey',
-    marginTop: 25,
-    marginBottom: 10,
-    textAlign: 'left',
-    paddingHorizontal: 5,
-  },
-  imagesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  additionalImage: {
-    width: 100,
-    height: 100,
-    margin: 5,
-    borderRadius: 10,
   },
 });
