@@ -41,7 +41,7 @@ export async function fetchTrailById(id) {
 
 export async function fetchTrailsByUserId(userId) {
     try {
-        const response = await fetch(`${BASE_URL}/user/${userId}`, {
+        const response = await fetch(`${BASE_URL}/owner/${userId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
