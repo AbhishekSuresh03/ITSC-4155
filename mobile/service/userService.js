@@ -38,3 +38,38 @@ export async function followUser(currentUserId, userIdToFollow){
         throw error;
     }
 }
+
+    export async function unFollowUser(currentUserId, userIdToFollow){
+        try{
+            const response = await fetch(`${BASE_URL}/${currentUserId}/unfollow/${userIdToFollow}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok){
+                const errorText = await response.text();
+                throw new Error(errorText);
+            }
+            return await response.json();
+        }catch(error){
+            throw error;
+        }
+}
+
+export async function getUser(userId) {
+    try {
+        const response = await fetch(`${BASE_URL}/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}

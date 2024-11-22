@@ -45,7 +45,7 @@ export default function CommunityScreen({ navigation }) {
     if (activeTab === 'Local') {
       return user && (trail.city === user.city || trail.state === user.state);
     } else if (activeTab === 'Following') {
-      return user && user.friends.includes(trail.userName);
+      return user && user.following.includes(trail.userName);
     }
     return true;
   });
@@ -68,9 +68,11 @@ export default function CommunityScreen({ navigation }) {
           <Text style={[styles.navButtonText, activeTab === 'Following' && styles.activeNavButtonText]}>Following</Text>
         </TouchableOpacity>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {filteredTrails.map((trail) => (
+        {activeTab === 'Following' && user.following.length === 0 ? (
+          <Text style={styles.noUsersText}>You are not following anyone</Text>
+        ) : (
+          filteredTrails.map((trail) => (
           <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
             <View style={styles.trailHeader}>
               <TouchableOpacity onPress={() => navigation.navigate('Profile', { user: users.find(user => user.userName === trail.userName) })}>
@@ -91,7 +93,8 @@ export default function CommunityScreen({ navigation }) {
               {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
             </Text>
           </TouchableOpacity>
-        ))}
+        ))
+      )}
       </ScrollView>
 
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
@@ -193,5 +196,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  noUsersText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: 'red',
   },
 });
