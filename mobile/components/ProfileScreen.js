@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
-import { fetchTrailsByOwnerId } from '../service/trailService';
+import { fetchTrailsByUserId } from '../service/trailService';
 
-export default function ProfileScreen() {
+
+export default function ProfileScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Feed');
   const { user, logout } = useContext(AuthContext); // Access user and logout from AuthContext
   const [trails, setTrails] = useState([]);
@@ -11,10 +12,11 @@ export default function ProfileScreen() {
 
 
   // -=-=-=-=-==-==-=-=--=-=-=-THIS IS A TEST
-  useEffect(() => {
+  useEffect(() => { 
     const loadTrails = async () => {
       try {
-        const fetchedTrails = await fetchTrailsByOwnerId(user.id);
+
+        const fetchedTrails = await fetchTrailsByUserId(user.id);
         console.log('Fetched Trails:', fetchedTrails); // Verify data
         setTrails(fetchedTrails);
         const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0); // Ensure trail.length is a number
@@ -24,14 +26,19 @@ export default function ProfileScreen() {
       }
     };
     loadTrails();
-  }, [user.id]);
+  }, [/*user.id,*/ navigation]);
 
   const handleLogout = async () => {
-    await logout();
-    navigation.navigate('Main'); // Navigate to Login screen after logout
+    try {
+      await logout();
+       // Navigate to the Opening screen after logout
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const renderContent = () => {
+    
     switch (activeTab) {
       case 'Feed':
         return (
@@ -73,13 +80,31 @@ export default function ProfileScreen() {
     }
   };
 
+  if(!user){
+    navigation.navigate('OpeningScreen')
+    return(
+      <Text>Not logged in</Text>
+    )
+  }
+  
   return (
     <ScrollView style={styles.container}>
-      <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+      <View style={styles.header}>
+          <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       <View style={styles.nameContainer}>
         <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
         <Text style={styles.location}>{user.city}, {user.state}</Text>
       </View>
+{/* 
+      <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+      <View style={styles.nameContainer}>
+        <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+        <Text style={styles.location}>{user.city}, {user.state}</Text>
+      </View> */}
       
       <View style={styles.followContainer}>
         <View style={styles.followers}>
@@ -136,12 +161,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f0f0',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+},
+  logoutButton: {
+    backgroundColor: '#ff0000',
+    padding: 10,
+    marginRight:15,
+    borderRadius: 5,
+},
+logoutButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+},
   profilePicture: {
     width: 150,
     height: 150, 
     borderRadius: 80,
     marginTop: 75,
-    marginLeft: 15
+    marginLeft: 15,
   },
   followerContainer: {
     backgroundColor: 'gray'
