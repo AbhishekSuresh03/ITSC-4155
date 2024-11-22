@@ -6,6 +6,8 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
 export async function getAllUsers() {
     try {
         //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
+        console.log('Get All Users ' + PRODUCTION_BACKEND_URL);
+        console.log('Get All Users ' + BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'GET',
             headers: {

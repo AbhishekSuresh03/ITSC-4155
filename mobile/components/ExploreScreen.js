@@ -54,14 +54,20 @@ export default function ExploreScreen() {
     fetchUsers();
   }, []);
 
+  
   const handleFollow = async (userIdToFollow) => {
-    try{
-      const response= await followUser(user.id, userIdToFollow);
-    
-    } catch (error){
-      console.error('Error following user:', error.message);
+    try {
+      console.log('Current user ID:', user.id);
+      console.log('User ID to follow:', userIdToFollow);
+      console.log('Calling followUser...');
+      const userData = await followUser(user.id, userIdToFollow);
+      console.log('followUser response:', userData);
+      console.log('Follow user operation completed');
+    } catch (error) {
+      console.error('Follow user error:', error.message);
+      Alert.alert('Follow operation failed', error.message);
     }
-  };
+};
 
   const handleSearch = (text) => {
     setSearch(text);
@@ -80,15 +86,15 @@ export default function ExploreScreen() {
         onChangeText={handleSearch}
       />
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        {filteredUsers.map(user => (
-          <View key={user.id} style={styles.userContainer}>
-            <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
+        {filteredUsers.map(userItem => (
+          <View key={userItem.id} style={styles.userContainer}>
+            <Image source={{ uri: userItem.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
             <View style={styles.userInfo}>
-              <Text style={styles.username}>{user.username}</Text>
-              <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
-              <Text style={styles.location}>{user.city}, {user.state}</Text>
+              <Text style={styles.username}>{userItem.username}</Text>
+              <Text style={styles.fullName}>{userItem.firstName} {userItem.lastName}</Text>
+              <Text style={styles.location}>{userItem.city}, {userItem.state}</Text>
               
-              <TouchableOpacity style={{ position: 'absolute', right: 0, backgroundColor: '#0095F6', borderRadius: 10, padding: 10 }} onPress={() => handleFollow(user.id)}>
+              <TouchableOpacity style={{ position: 'absolute', right: 0, backgroundColor: '#0095F6', borderRadius: 10, padding: 10 }} onPress={() => handleFollow(userItem.id)}>
 
               <Text style={styles.followButtonText}>Follow</Text>
               </TouchableOpacity>

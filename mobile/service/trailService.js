@@ -6,6 +6,8 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/trails`;
 export async function fetchTrails() {
     try {
         //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
+        console.log('Fetch All Trails: ' + PRODUCTION_BACKEND_URL);
+        console.log('Fetch All Trails: ' + BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'GET',
             headers: {
@@ -23,6 +25,8 @@ export async function fetchTrails() {
 
 export async function fetchTrailById(id) {
     try {
+        console.log('Follow Trail By Id: ' + PRODUCTION_BACKEND_URL);
+        console.log('Follow Trail By Id: ' + BASE_URL);
         const response = await fetch(`${BASE_URL}/${id}`, {
             method: 'GET',
             headers: {
@@ -40,6 +44,8 @@ export async function fetchTrailById(id) {
 
 export async function fetchTrailsByUserId(userId) {
     try {
+        console.log('Fetch Trail By User Id: ' + PRODUCTION_BACKEND_URL);
+        console.log('Fetch Trail By User Id: ' + BASE_URL);
         const response = await fetch(`${BASE_URL}/owner/${userId}`, {
             method: 'GET',
             headers: {
@@ -60,6 +66,8 @@ export async function fetchTrailsByUserId(userId) {
 
 export async function createTrail(formData, userId) {
     try {
+        console.log('Create Trail: ' + PRODUCTION_BACKEND_URL);
+        console.log('Create Trail: ' + BASE_URL);
         const response = await fetch(`${BASE_URL}?ownerId=${userId}`, {
             method: 'POST',
             headers: {

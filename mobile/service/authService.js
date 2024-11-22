@@ -10,6 +10,8 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
 export async function loginUser(username, password){
     try{
         //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
+        console.log('Login User ' + PRODUCTION_BACKEND_URL);
+        console.log('Login User ' + BASE_URL);
         const response = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
             headers: {
@@ -37,6 +39,8 @@ export async function createUser(formData){
     try{
         // console.log(formData);
         // console.log(BASE_URL);
+        console.log('Create User ' + PRODUCTION_BACKEND_URL);
+        console.log('Create User ' + BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'POST',
             headers: {

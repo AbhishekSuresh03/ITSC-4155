@@ -76,12 +76,16 @@ public class UserController {
 
     @PostMapping("/{currentUserId}/unfollow/{userIdToUnfollow}")
     public ResponseEntity<User> unfollowUser(@PathVariable String currentUserId, @PathVariable String userIdToUnfollow) {
+        System.out.println("calling unfollow user");
         User updatedUser = userService.unfollowUser(currentUserId, userIdToUnfollow);
+        System.out.println(updatedUser);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
     @PostMapping("/{currentUserId}/follow/{userIdToFollow}")
     public ResponseEntity<User> followUser(@PathVariable String currentUserId, @PathVariable String userIdToFollow) {
+        System.out.println("calling follow user");
         User updatedUser = userService.followUser(currentUserId, userIdToFollow);
+        System.out.println(updatedUser);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 }
