@@ -1,0 +1,406 @@
+COMMUNITY SCREEN
+GET /trails //returns a list of all trails
+//returns a list of all trails
+//so the idea for the community screen is that it will display all trails from the database that are in the users city, and the user can click on a trail to view more details about it
+//in theory the data can be parsed down on the front end to only display trails in the users city.
+//future improvements involve making a route that only returns trails in the users city
+{
+  "trails": [
+    {
+      "id": "trail1",
+      "name": "Mountain Trail",
+      "city": "Denver",
+      "state": "Colorado",
+      "rating": 4.5,
+      "difficulty": "Moderate",
+      "length": 5.2,
+      "time": 2.5,
+      "pace": 2.1,
+      "primaryImage": "url_to_image",
+      "images": ["url_to_image1", "url_to_image2"],
+      "owner": {
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "profilePicture": "url_to_profile_picture",
+        "city": "Denver",
+        "state": "Colorado"
+      },
+      "date": "2023-10-01T12:00:00Z",
+      "description": "A beautiful mountain trail."
+    },
+    {
+      "id": "trail2",
+      "name": "Forest Trail",
+      "city": "Portland",
+      "state": "Oregon",
+      "rating": 4.8,
+      "difficulty": "Easy",
+      "length": 3.5,
+      "time": 1.5,
+      "pace": 2.3,
+      "primaryImage": "url_to_image",
+      "images": ["url_to_image3", "url_to_image4"],
+      "owner": {
+        "id": "user2",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "username": "jane_smith",
+        "profilePicture": "url_to_profile_picture",
+        "city": "Portland",
+        "state": "Oregon"
+      },
+      "date": "2023-09-15T08:00:00Z",
+      "description": "A serene forest trail."
+    }
+  ]
+}
+
+
+**********************
+FOLLOWING PAGE
+GET /trails/user/{userId} 
+//returns a list of trails that belong to users that the userId specified follows
+//so the idea for the following page is that it will display trails from the database that the user is following
+//in theory this data can be parsed down on the front end, filtering down the list of trails from the database to only display the trails that belong to users that the user is following
+//however, it may prove to be easier to just go ahead and parse down the data on the backend and only return the trails that belong to users that the user is following
+{
+    "trails": [{
+            "id": "trail1",
+            "name": "Mountain Trail",
+            "city": "Denver",
+            "state": "Colorado",
+            "rating": 4.5,
+            "difficulty": "Moderate",
+            "length": 5.2,
+            "time": 2.5,
+            "pace": 2.1,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image1", "url_to_image2"],
+            "owner": {
+              "id": "user1",
+              "firstName": "John",
+              "lastName": "Doe",
+              "username": "john_doe",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Denver",
+              "state": "Colorado"
+            },
+            "date": "2023-10-01T12:00:00Z",
+            "description": "A beautiful mountain trail."
+          },
+          {
+            "id": "trail2",
+            "name": "Forest Trail",
+            "city": "Portland",
+            "state": "Oregon",
+            "rating": 4.8,
+            "difficulty": "Easy",
+            "length": 3.5,
+            "time": 1.5,
+            "pace": 2.3,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image3", "url_to_image4"],
+            "owner": {
+              "id": "user2",
+              "firstName": "Jane",
+              "lastName": "Smith",
+              "username": "jane_smith",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Portland",
+              "state": "Oregon"
+            },
+            "date": "2023-09-15T08:00:00Z",
+            "description": "A serene forest trail."
+        }]
+}
+
+EXPLORE PAGE
+GET /users
+returns all users
+RESPONSE BODY
+//the idea for this for the deliverable is to display a list of all users in card form
+//the database can just return a list of users and the necessary information about them
+//future versions can implement a profile view for each user, where it displays information about another user and the trails they have posted
+//but for now this is the only necessary information needed about the user
+{
+    "users": [
+      {
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+      },
+      {
+        "id": "user2",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "username": "jane_smith",
+        "email": "jane.smith@example.com",
+        "city": "Portland",
+        "state": "Oregon",
+        "profilePicture": "url_to_profile_picture",
+      }
+    ]
+  }
+  *************************
+  //FOLLOW USER
+  //just need the currently logged in user and the user they will follow
+  //WORK IN PROGRESS //To me right now it makes so to go ahead and return a list of all of the users that the user is following in the response body
+  POST /users/follow 
+  REQUEST BODY
+  {
+    "userId": "userId",
+    "userToFollowId": "userToFollowId"
+  }
+  RESPONSE BODY
+  {
+    "following": [
+      {
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+        "trails": [{
+            "id": "trail1",
+            "name": "Mountain Trail",
+            "city": "Denver",
+            "state": "Colorado",
+            "rating": 4.5,
+            "difficulty": "Moderate",
+            "length": 5.2,
+            "time": 2.5,
+            "pace": 2.1,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image1", "url_to_image2"],
+            "owner": {
+              "id": "user1",
+              "firstName": "John",
+              "lastName": "Doe",
+              "username": "john_doe",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Denver",
+              "state": "Colorado"
+            },
+            "date": "2023-10-01T12:00:00Z",
+            "description": "A beautiful mountain trail."
+          },
+          {
+            "id": "trail2",
+            "name": "Forest Trail",
+            "city": "Portland",
+            "state": "Oregon",
+            "rating": 4.8,
+            "difficulty": "Easy",
+            "length": 3.5,
+            "time": 1.5,
+            "pace": 2.3,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image3", "url_to_image4"],
+            "owner": {
+              "id": "user2",
+              "firstName": "Jane",
+              "lastName": "Smith",
+              "username": "jane_smith",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Portland",
+              "state": "Oregon"
+            },
+            "date": "2023-09-15T08:00:00Z",
+            "description": "A serene forest trail."
+          }],
+      {
+        "id": "user2",
+        "firstName": "John2",
+        "lastName": "Doe2",
+        "username": "john_doe2",
+        "email": "john.doe@example.com2",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+        "trails": [{
+            "id": "trail2",
+            "name": "Forest Trail",
+            "city": "Portland",
+            "state": "Oregon",
+            "rating": 4.8,
+            "difficulty": "Easy",
+            "length": 3.5,
+            "time": 1.5,
+            "pace": 2.3,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image3", "url_to_image4"],
+            "owner": {
+              "id": "user2",
+              "firstName": "Jane",
+              "lastName": "Smith",
+              "username": "jane_smith",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Portland",
+              "state": "Oregon"
+            },
+            "date": "2023-09-15T08:00:00Z",
+            "description": "A serene forest trail."
+          }, 
+          {
+            "id": "trail2",
+            "name": "Forest Trail",
+            "city": "Portland",
+            "state": "Oregon",
+            "rating": 4.8,
+            "difficulty": "Easy",
+            "length": 3.5,
+            "time": 1.5,
+            "pace": 2.3,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image3", "url_to_image4"],
+            "owner": {
+              "id": "user2",
+              "firstName": "Jane",
+              "lastName": "Smith",
+              "username": "jane_smith",
+              "profilePicture": "url_to_profile_picture",
+              "city": "Portland",
+              "state": "Oregon"
+            },
+            "date": "2023-09-15T08:00:00Z",
+            "description": "A serene forest trail."
+          }]
+      }
+    ]
+  }
+
+
+
+  ************PROFILE PAGE*************
+  //gets all of the information about a requested user to display on their profile page
+  //currently returns the public information about the user, the trails they have posted, and the users they are following
+  //this route  is being built future proof, with a shit ton of information being returned for future navigation purposes
+  GET /users/{userId}
+  returns a user object
+
+  {
+    {
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+        "trails": [
+          {
+            "id": "trail1",
+            "name": "Mountain Trail",
+            "city": "Denver",
+            "state": "Colorado",
+            "rating": 4.5,
+            "difficulty": "Moderate",
+            "length": 5.2,
+            "time": 2.5,
+            "pace": 2.1,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image1", "url_to_image2"]
+          }
+        ]
+      },
+      "following":[{
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+        "trails": [
+          {
+            "id": "trail1",
+            "name": "Mountain Trail",
+            "city": "Denver",
+            "state": "Colorado",
+            "rating": 4.5,
+            "difficulty": "Moderate",
+            "length": 5.2,
+            "time": 2.5,
+            "pace": 2.1,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image1", "url_to_image2"]
+          }]
+      }]
+  }
+
+  ******SIGNUP*******
+  REQUEST BODY
+  {
+    "firstName": "Hunter",
+    "lastName": "Starets",
+    "username": "HunterStafdsaffdsdfasdfdfadsdsretsUpdatedfdsafdfads",
+    "email": "hunter.starets@gfdfdsafdsafmail.comfdsafdfdasfdsaf",
+    "password": "12345678",
+    "city": "Charlotte",
+    "state": "NC",
+    "profilePicture": "https://firebasestorage.googleapis.com/v0/b/strava-clone-6ef8f.firebasestorage.app/o/profile_pics%2F1732150901869_56E93C40-43DB-48F0-BAE0-C17CB07DC17C.png?alt=media&token=ae477a86-8a75-4295-bd3b-34a9b8aceb53",
+    "trails": [],
+    "following": []
+}
+
+RESPONSE 
+{
+    "firstName": "Hunter",
+    "lastName": "Starets",
+    "username": "HunterStafdsaffdsdfasdfdfadsdsretsUpdatedfdsafdfads",
+    "email": "hunter.starets@gfdfdsafdsafmail.comfdsafdfdasfdsaf",
+    "password": "12345678",
+    "city": "Charlotte",
+    "state": "NC",
+    "profilePicture": "https://firebasestorage.googleapis.com/v0/b/strava-clone-6ef8f.firebasestorage.app/o/profile_pics%2F1732150901869_56E93C40-43DB-48F0-BAE0-C17CB07DC17C.png?alt=media&token=ae477a86-8a75-4295-bd3b-34a9b8aceb53",
+    "trails": [],
+    "following": []
+}
+
+**********LOGIN**********
+REQUEST BODY
+{
+    "username": "HunterStafdsaffdsdfasdfdfadsdsretsUpdatedfdsafdfads",
+    "password": "12345678"
+}
+RESPONSE BODY
+{
+    {
+        "id": "user1",
+        "firstName": "John",
+        "lastName": "Doe",
+        "username": "john_doe",
+        "email": "john.doe@example.com",
+        "city": "Denver",
+        "state": "Colorado",
+        "profilePicture": "url_to_profile_picture",
+        "trails": [
+          {
+            "id": "trail1",
+            "name": "Mountain Trail",
+            "city": "Denver",
+            "state": "Colorado",
+            "rating": 4.5,
+            "difficulty": "Moderate",
+            "length": 5.2,
+            "time": 2.5,
+            "pace": 2.1,
+            "primaryImage": "url_to_image",
+            "images": ["url_to_image1", "url_to_image2"]
+          }
+        ]
+      },
+  }
+
