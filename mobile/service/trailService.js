@@ -1,12 +1,12 @@
 import {
-    PRODUCTION_BACKEND_URL
+    PRODUCTION_BACKEND_URL,
+    DEVELOPMENT_BACKEND_URL
   } from "@env"; // Import environment variables
-const BASE_URL = `${PRODUCTION_BACKEND_URL}/trails`;
+const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/trails`;
 
 export async function fetchTrails() {
     try {
         //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
-        
         const response = await fetch(`${BASE_URL}`, {
             method: 'GET',
             headers: {

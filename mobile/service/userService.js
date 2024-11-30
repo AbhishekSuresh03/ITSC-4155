@@ -1,7 +1,8 @@
 import {
-    PRODUCTION_BACKEND_URL
+    PRODUCTION_BACKEND_URL,
+    DEVELOPMENT_BACKEND_URL
   } from "@env"; // Import environment variables
-const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
+const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/users`;
 
 export async function getAllUsers() {
     try {

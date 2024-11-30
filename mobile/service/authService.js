@@ -1,7 +1,8 @@
 import {
-    PRODUCTION_BACKEND_URL
+    PRODUCTION_BACKEND_URL,
+    DEVELOPMENT_BACKEND_URL
   } from "@env"; // Import environment variables
-const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
+const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/users`;
 
 
 // *******Replace with your actual backend URL using your computer IP address NOT local host, local host address is different on your phone than your laptop*****************8
@@ -9,6 +10,8 @@ const BASE_URL = `${PRODUCTION_BACKEND_URL}/users`;
 //function to handle login
 export async function loginUser(username, password){
     try{
+        console.log(BASE_URL);
+
         //IF YOU DELETE THIS COMMENT THIS WILL BREAK. DO NOT DELETE
         const response = await fetch(`${BASE_URL}/login`, {
             method: 'POST',
