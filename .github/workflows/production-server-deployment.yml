@@ -2,7 +2,7 @@ name: Prod Server Deploy
 on:
   push:
     branches: [ "main" ]
-  paths:
+    paths:
         - 'server/**'
 jobs:
   build:
