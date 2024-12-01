@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, RefreshControl } from 'react-native';
 import { SearchBar, Icon } from 'react-native-elements';
 import TrailDetailModal from './TrailDetailModal';
-import { fetchTrails } from '../service/trailService';
+import { fetchTrails, fetchTrailsByFollowingUsers } from '../service/trailService';
 import { AuthContext } from '../context/AuthContext';
+import { formatDate, formatTime } from '../utils/formattingUtil';
 
 // Default Images
 const defaultImage = require('../assets/icon.png');
@@ -14,22 +15,39 @@ export default function CommunityScreen({ navigation }) {
   const [selectedTrail, setSelectedTrail] = useState(null);
   const [activeTab, setActiveTab] = useState('Local');
   const [trails, setTrails] = useState([]);
+  const [trailsForFollowingPage, setTrailsForFollowingPage] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext); // Access user from AuthContext
+  const [refreshing, setRefreshing] = useState(false);
+  
 
   useEffect(() => {
-    const loadTrails = async () => {
-      try {
-        const fetchedTrails = await fetchTrails();
-        setTrails(fetchedTrails);
-      } catch (error) {
-        console.error('Error fetching trails:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadTrails();
+    loadTrailsForFollowingPage();
   }, []);
+
+  const loadTrails = async () => {
+    try {
+      const fetchedTrails = await fetchTrails();
+      setTrails(fetchedTrails);
+    } catch (error) {
+      console.error('Error fetching trails:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const loadTrailsForFollowingPage = async () => {
+    try {
+      const fetchedTrails = await fetchTrailsByFollowingUsers(user.id);
+      setTrailsForFollowingPage(fetchedTrails);
+    } catch (error) {
+      console.error('Error fetching trails:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
 
   const openModal = (trail) => {
     setSelectedTrail(trail);
@@ -41,11 +59,9 @@ export default function CommunityScreen({ navigation }) {
     setSelectedTrail(null);
   };
 
-  const filteredTrails = trails.filter((trail) => {
+  const filteredTrails = activeTab === 'Following' ? trailsForFollowingPage : trails.filter((trail) => {
     if (activeTab === 'Local') {
       return user && (trail.city === user.city || trail.state === user.state);
-    } else if (activeTab === 'Following') {
-      return user && user.friends.includes(trail.userName);
     }
     return true;
   });
@@ -57,6 +73,14 @@ export default function CommunityScreen({ navigation }) {
       </View>
     );
   }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadTrails();
+    
+    await loadTrailsForFollowingPage();
+    console.log("test");
+    setRefreshing(false);
+  };
 
   return (
     <View style={styles.container}>
@@ -69,29 +93,41 @@ export default function CommunityScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollViewContent} style={styles.scrollView}>
-        {filteredTrails.map((trail) => (
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        style={styles.scrollView}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {filteredTrails.length === 0 ? ( // Added this block
+          <View style={styles.emptyContainer}>
+            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyImage} />
+            <Text style={styles.emptyText}>No trails to display. Pull down to refresh or try a different tab.</Text>
+          </View>
+        ) : (
+        filteredTrails.map((trail) => (
           <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
             <View style={styles.trailHeader}>
-              <TouchableOpacity onPress={() => navigation.navigate('Profile', { user: users.find(user => user.userName === trail.userName) })}>
-                <Image source={trail.profilePic} style={styles.profilePicture} />
+              <TouchableOpacity> 
+                 {/* TODO: Implement separate profile screen to view other peoples profiles, this would navigate over to that on press */}
+                <Image source={{ uri: trail.owner.profilePicture}} style={styles.profilePicture} /> 
               </TouchableOpacity>
               <View style={styles.trailHeaderText}>
-                <Text style={styles.userName}>{trail.userName}</Text>
-                <Text style={styles.date}>{trail.date}</Text>
+                <Text style={styles.userName}>{trail.owner.username}</Text>
+                <Text style={styles.date}>{formatDate(trail.date)}</Text>
               </View>
             </View>
             <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
             <Text style={styles.trailName}>{trail.name}</Text>
             <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
             <Text style={styles.trailDetails}>
-              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length} | {trail.time}
+              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length.toFixed(2) } Miles | {formatTime(trail.time)}
             </Text>
             <Text style={styles.trailDescription}>
               {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
             </Text>
           </TouchableOpacity>
-        ))}
+         ))
+        )}
       </ScrollView>
 
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
@@ -193,5 +229,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#888',
+    textAlign: 'center',
   },
 });

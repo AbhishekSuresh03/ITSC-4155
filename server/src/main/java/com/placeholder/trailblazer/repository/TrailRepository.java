@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface TrailRepository extends MongoRepository<Trail, String> {
     List<Trail> findByOwnerId(String ownerId);
+    List<Trail> findAllByOwnerIdIn(List<String> ownerIds);
 }

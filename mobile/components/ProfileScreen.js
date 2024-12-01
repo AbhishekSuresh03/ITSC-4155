@@ -9,6 +9,8 @@ export default function ProfileScreen({ navigation }) {
   const { user, logout } = useContext(AuthContext); // Access user and logout from AuthContext
   const [trails, setTrails] = useState([]);
   const [totalMiles, setTotalMiles] = useState(0);
+  const [trailPictures, setTrailPictures] = useState([]);
+
 
 
   // -=-=-=-=-==-==-=-=--=-=-=-THIS IS A TEST
@@ -19,7 +21,9 @@ export default function ProfileScreen({ navigation }) {
         const fetchedTrails = await fetchTrailsByUserId(user.id);
         console.log('Fetched Trails:', fetchedTrails); // Verify data
         setTrails(fetchedTrails);
-        const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0); // Ensure trail.length is a number
+        const pictures = getTrailPictures(trails);
+        setTrailPictures(pictures);
+        const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0).toFixed(2); // dont even ask how this works, it just does.
         setTotalMiles(miles);
       } catch (error) {
         console.error('Error fetching trails:', error);
@@ -28,6 +32,18 @@ export default function ProfileScreen({ navigation }) {
     loadTrails();
   }, [navigation]);
 
+  function getTrailPictures(trails) {
+    const trailPictures = [];
+    trails.forEach(trail => {
+      if (trail.primaryImage) {
+        trailPictures.push(trail.primaryImage);
+      }
+      if (trail.images && Array.isArray(trail.images)) {
+        trailPictures.push(...trail.images);
+      }
+    });
+    return trailPictures;
+  }
   const handleLogout = async () => {
     try {
       await logout();
@@ -38,7 +54,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const renderContent = () => {
-    
+    console.log(trails);
     switch (activeTab) {
       case 'Feed':
         return (
@@ -49,10 +65,22 @@ export default function ProfileScreen({ navigation }) {
         );
       case 'Photos':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No photos to currently display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            {trailPictures.length === 0 ? (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No photos to currently display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+              </View>
+            ) : (
+              <View style={styles.imageGrid}>
+                {trailPictures.map((picture, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{ uri: picture }} style={styles.image} />
+                  </View>
+                ))}
+              </View>
+            )}
+          </ScrollView>
         );
       case 'Reviews':
         return (
@@ -63,10 +91,28 @@ export default function ProfileScreen({ navigation }) {
         );
       case 'Activities':
         return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No activities to display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            {trails.length === 0 ? (
+              <View style={styles.contentContainer}>
+                <Text style={styles.contentText}>No activities to display!</Text>
+                <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+              </View>
+            ) : (
+              trails.map((trail) => (
+                <View key={trail.id} style={styles.card}>
+                  <Image source={{ uri: trail.primaryImage }} style={styles.cardImage} />
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{trail.name}</Text>
+                    <Text style={styles.cardLocation}>{trail.city}, {trail.state}</Text>
+                    <Text style={styles.cardDetails}>{trail.difficulty} | {trail.length} | {trail.time}</Text>
+                    <Text style={styles.cardDescription}>
+                      {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            )}
+          </ScrollView>
         );
       case 'Completed':
         return (
@@ -79,6 +125,7 @@ export default function ProfileScreen({ navigation }) {
         return null;
     }
   };
+
 
   if(!user){
     navigation.navigate('OpeningScreen')
@@ -103,11 +150,11 @@ export default function ProfileScreen({ navigation }) {
       
       <View style={styles.followContainer}>
         <View style={styles.followers}>
-          <Text style={styles.followerNum}>1</Text>
-          <Text style={styles.followerText}>follower</Text>
+          <Text style={styles.followerNum}>{user.followers.length}</Text>
+          <Text style={styles.followerText}>followers</Text>
         </View>
         <View style={styles.following}>
-          <Text style={styles.followingNum}>1</Text>
+          <Text style={styles.followingNum}>{user.following.length}</Text>
           <Text style={styles.followingText}>following</Text>
         </View>
       </View>
@@ -310,5 +357,82 @@ logoutButtonText: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
-  }
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+    elevation: 3,
+  },
+  cardImage: {
+    width: '100%',
+    height: 200,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  cardLocation: {
+    fontSize: 14,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  cardDetails: {
+    fontSize: 12,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#333',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentText: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  emptyPicture: {
+    height: 175,
+    width: 200,
+    borderRadius: 50,
+  },
+  imageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  imageWrapper: {
+    width: '48%',
+    marginBottom: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+  },
 });
