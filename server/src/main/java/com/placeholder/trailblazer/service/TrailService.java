@@ -105,6 +105,7 @@ public class TrailService {
         trl.setOwner(trail.getOwner());
         trl.setDate(trail.getDate());
         trl.setDescription(trail.getDescription());
+        
     }
 
     public List<Trail> findTrailsByFollowingUsers(String userId) {
