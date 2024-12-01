@@ -1,10 +1,9 @@
-name: Server Deploy
+name: Prod Server Deploy
 on:
-  pull_request:
-    branches: [ "develop" ]
-    paths:
-      - 'server/**'
-
+  push:
+    branches: [ "main" ]
+  paths:
+        - 'server/**'
 jobs:
   build:
 
@@ -42,7 +41,7 @@ jobs:
       with:
         context: ./server
         push: true
-        tags: hunterstarets/trailblazer:dev
+        tags: hunterstarets/trailblazer:prod
 
     - name: Authenticate Google Cloud
       uses: 'google-github-actions/auth@v2'
@@ -52,10 +51,11 @@ jobs:
     - id: 'deploy'
       uses: 'google-github-actions/deploy-cloudrun@v2'
       with:
-          service: 'trailblazer-server'
+          service: 'trailblazer-server-prod'
           region: 'us-east1'
           flags: '--allow-unauthenticated'
-          image: 'hunterstarets/trailblazer:dev'
+          image: 'hunterstarets/trailblazer:prod'
           env_vars: |
             SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}
             SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
+

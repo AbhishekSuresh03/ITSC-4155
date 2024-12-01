@@ -136,8 +136,4 @@ public class UserController {
         List<String> followerUserIds = userService.getFollowerUserIds(userId);
         return ResponseEntity.ok(followerUserIds);
     }
-
-
-
-
 }
