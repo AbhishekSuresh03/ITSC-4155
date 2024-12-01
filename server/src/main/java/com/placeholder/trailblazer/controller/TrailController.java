@@ -14,6 +14,7 @@ public class TrailController {
     @Autowired
     private TrailService trailService;
 
+    @CrossOrigin
     @GetMapping
     public List<Trail> findAll() {
         return trailService.findAllTrails();
@@ -37,6 +38,7 @@ public class TrailController {
         return trailService.findTrailsByOwnerId(ownerId);
     }
 
+    @CrossOrigin
     @PutMapping(value = "/{id}")
     public Trail update(@RequestBody Trail trail, @PathVariable String id) {
         return trailService.updateTrail(trail, id);
@@ -47,5 +49,11 @@ public class TrailController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) {
         trailService.deleteTrail(id);
+    }
+
+    @CrossOrigin
+    @GetMapping("/following/{userId}")
+    public List<Trail> findTrailsByFollowingUsers(@PathVariable String userId) {
+        return trailService.findTrailsByFollowingUsers(userId);
     }
 }

@@ -9,6 +9,8 @@ import com.placeholder.trailblazer.service.exceptions.ObjectNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +21,8 @@ public class TrailService {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private UserService userService;
 
     // CRUD Operations
 
@@ -34,9 +38,29 @@ public class TrailService {
         ownerInfo.setFirstName(owner.getFirstName());
         ownerInfo.setLastName(owner.getLastName());
         ownerInfo.setProfilePicture(owner.getProfilePicture());
+        ownerInfo.setId(owner.getId());
 
+        //set default image if none was submitted, probably an error
+        if(trail.getPrimaryImage() == null){
+            trail.setPrimaryImage("https://cloudfront.traillink.com/photos/sligo-creek-trail_70435_sc.jpg");
+        }
+        //setting the image array from null to an empty array list if the field was not populated on submission
+        if(trail.getImages() == null){
+            trail.setImages(new ArrayList<>());
+        }
+        if(trail.getDescription() == null){
+            trail.setDescription("");
+        }
+
+
+        //calculate pace
+        if(trail.getLength() != null && trail.getTime() != null){
+            double pace = trail.getLength() / trail.getTime();
+            trail.setPace(pace);
+        }
         trail.setId(UUID.randomUUID().toString().split("-")[0]);
         trail.setOwner(ownerInfo);
+        trail.setDate(new Date());
         return trailRepository.save(trail);
     }
 
@@ -81,5 +105,10 @@ public class TrailService {
         trl.setOwner(trail.getOwner());
         trl.setDate(trail.getDate());
         trl.setDescription(trail.getDescription());
+    }
+
+    public List<Trail> findTrailsByFollowingUsers(String userId) {
+        List<String> followingUserIds = userService.getFollowingUserIds(userId);
+        return trailRepository.findAllByOwnerIdIn(followingUserIds);
     }
 }
