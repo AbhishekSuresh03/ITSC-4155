@@ -42,7 +42,7 @@ jobs:
       with:
         context: ./server
         push: true
-        tags: hunterstarets/trailblazer:latest
+        tags: hunterstarets/trailblazer:dev
 
     - name: Authenticate Google Cloud
       uses: 'google-github-actions/auth@v2'
@@ -55,7 +55,7 @@ jobs:
           service: 'trailblazer-server'
           region: 'us-east1'
           flags: '--allow-unauthenticated'
-          image: 'hunterstarets/trailblazer'
+          image: 'hunterstarets/trailblazer:dev'
           env_vars: |
             SPRING_DATA_MONGODB_URI=${{ secrets.SPRING_DATA_MONGODB_URI }}
             SPRING_DATA_MONGODB_DATABASE=${{ secrets.SPRING_DATA_MONGODB_DATABASE }}
