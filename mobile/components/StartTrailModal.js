@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext} from 'react';
 import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline } from 'react-native-maps';
 import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
 import * as ImagePicker from 'expo-image-picker';
 import { uploadTrailPic } from '../service/fileService';
@@ -24,6 +24,7 @@ const StartTrailModal = () => {
   const[primaryImage, setPrimaryImage] = useState('');
   const[startCity, setStartCity] = useState('');
   const[startState, setStartState] = useState('');
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -174,6 +175,7 @@ const StartTrailModal = () => {
       length: distanceTraveled, //chaning from this to store raw data in DB: distanceTraveled.toFixed(2) + ' miles',
       city: startCity,
       state: startState,
+      route: routeCoordinates,
     });
   };
 
@@ -202,15 +204,20 @@ const StartTrailModal = () => {
     if (trailActive) {
       const watchLocation = async () => {
         locationSubscription = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 }, // Update every 5 meters
+          { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
           (newLocation) => {
+            const newCoords = { latitude: newLocation.coords.latitude, longitude: newLocation.coords.longitude };
+            
             if (location) {
               const distance = calculateDistance(location, newLocation.coords);
               setDistanceTraveled((prevDistance) => prevDistance + distance);
             }
+        
+            setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]); // Append new coordinates
             setLocation(newLocation.coords);
           }
         );
+        
       };
       watchLocation();
     }
@@ -283,7 +290,13 @@ const StartTrailModal = () => {
                 <Marker coordinate={trailStartLocation} title="Start Point" />
               )}
               <Marker coordinate={location} title="Your Location" />
-            </MapView>
+              <Polyline
+                coordinates={routeCoordinates} // Pass the route coordinates
+                strokeWidth={3}
+                strokeColor="blue"
+              />
+          </MapView>
+          
           )}
           <View style={styles.infoContainer}>
             {trailActive && (
@@ -371,7 +384,6 @@ const StartTrailModal = () => {
               <View style={styles.uploadedImagesContainer}>
                 <ScrollView horizontal>
                 {images.map((image, index) => {
-                  // console.log(`Image URL ${index}: ${image}`);
                   return <Image key={index} source={{ uri: image }} style={styles.uploadedImage} />;
                 })}
                 </ScrollView>
@@ -481,3 +493,6 @@ const styles = StyleSheet.create({
 });
 
 export default StartTrailModal;
+
+
+
