@@ -76,3 +76,23 @@ export async function createTrail(formData, userId) {
         throw error;
     }
 }
+
+export async function fetchTrailsByFollowingUsers(userId) {
+    try {
+        const response = await fetch(`${BASE_URL}/following/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        const responseText = await response.text();
+        console.log('API Response:', responseText); // Log the raw response text
+        if (!response.ok) {
+            throw new Error(responseText);
+        }
+        return JSON.parse(responseText); // Parse the response text as JSON
+    } catch (error) {
+        console.error('Error fetching trails by following users:', error);
+        throw error;
+    }
+}
