@@ -2,7 +2,8 @@ name: Server Deploy
 on:
   pull_request:
     branches: [ "develop" ]
-    
+    paths:
+      - 'server/**'
 
 jobs:
   build:
