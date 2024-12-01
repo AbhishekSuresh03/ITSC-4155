@@ -202,7 +202,7 @@ const StartTrailModal = () => {
     if (trailActive) {
       const watchLocation = async () => {
         locationSubscription = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.High, distanceInterval: 5 }, // Update every 5 meters
+          { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 }, // Update every 5 meters
           (newLocation) => {
             if (location) {
               const distance = calculateDistance(location, newLocation.coords);
