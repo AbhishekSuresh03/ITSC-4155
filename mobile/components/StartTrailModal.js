@@ -95,6 +95,7 @@ const StartTrailModal = () => {
 
     setTrailStartLocation(currentLocation);
     setLocation(currentLocation);
+    setRouteCoordinates([]); // Clear the polyline coordinates for a new trail
     //added by hunter to automatically populate city and state based on start location
     let cityAndState = await getCityAndState(currentLocation.latitude, currentLocation.longitude); //this is terrible code I know, i just want to finish this
     setStartCity(cityAndState.city);
