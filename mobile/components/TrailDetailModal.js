@@ -35,7 +35,7 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
               </View>
               <View style={styles.separator} />
               <View style={styles.infoGrid}>
-                <Text style={styles.infoItem}>Length: <Text style={styles.boldText}>{trail.length.toFixed(2)}</Text></Text>
+                <Text style={styles.infoItem}>Length: <Text style={styles.boldText}>{trail.length.toFixed(2)} Miles</Text></Text>
                 <Text style={styles.infoItem}>Time: <Text style={styles.boldText}>{formatTime(trail.time)}</Text></Text>
                 <Text style={styles.infoItem}>Pace: <Text style={styles.boldText}>{formatPace(trail.pace)}</Text></Text>
                 <Text style={styles.infoItem}>Difficulty: <Text style={styles.boldText}>{trail.difficulty}</Text></Text>
