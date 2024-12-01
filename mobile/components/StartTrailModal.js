@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useContext} from 'react';
+import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
+import * as ImagePicker from 'expo-image-picker';
+import { uploadTrailPic } from '../service/fileService';
+import { createTrail } from '../service/trailService'; // Import createTrail function
+import { AuthContext } from '../context/AuthContext';
+import Slider from '@react-native-community/slider';
+import { Picker } from '@react-native-picker/picker';
 
 const StartTrailModal = () => {
+  const { user } = useContext(AuthContext); // Access user from AuthContext
   const [location, setLocation] = useState(null);
   const [trailActive, setTrailActive] = useState(false);
   const [trailStartLocation, setTrailStartLocation] = useState(null);
@@ -13,13 +20,21 @@ const StartTrailModal = () => {
   const [intervalId, setIntervalId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false); // To manage modal visibility
+  const [images, setImages] = useState([]);
+  const[primaryImage, setPrimaryImage] = useState('');
+  const[startCity, setStartCity] = useState('');
+  const[startState, setStartState] = useState('');
   const [formData, setFormData] = useState({
-    time: 0,
-    distance: 0,
+    name: '',
     city: '',
     state: '',
-    trailName: '',
-    rating: '',
+    rating: 0, //TODO Fix this being a string input, needs to be double or will return errors
+    difficulty: '', //TODO Populate this
+    length: 0,
+    time: 0,
+    images: [], //TODO Populate this
+    //primaryImage //TODO populate this
+    description: '', //TODO populate this
   }); // To store form data
 
   // Request location permissions
@@ -46,6 +61,22 @@ const StartTrailModal = () => {
     }
   };
 
+  async function getCityAndState(latitude, longitude) {
+    try {
+      const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      return {
+        city: address.city,
+        state: address.region,
+      };
+    } catch (error) {
+      console.error('Error getting city and state:', error);
+      return {
+        city: '',
+        state: '',
+      };
+    }
+  }
+
   // Initialize location on page load
   useEffect(() => {
     const initializeLocation = async () => {
@@ -63,11 +94,65 @@ const StartTrailModal = () => {
 
     setTrailStartLocation(currentLocation);
     setLocation(currentLocation);
+    //added by hunter to automatically populate city and state based on start location
+    let cityAndState = await getCityAndState(currentLocation.latitude, currentLocation.longitude); //this is terrible code I know, i just want to finish this
+    setStartCity(cityAndState.city);
+    setStartState(cityAndState.state);
+    
     setTrailActive(true);
 
     // Start the timer
     const timerId = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
     setIntervalId(timerId);
+  };
+
+  //IMAGE STUFF
+  const pickImages = async () => {
+    console.log('Pick image button pressed');
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      allowsEditing: true,
+      aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
+      quality: 1,
+    });
+
+    console.log('Image picker result:', result);
+
+    if (!result.canceled) {
+      const uploadedImages = images.slice(); //clearing the array
+      //uploading each image individually
+      // const downloadURL = await uploadTrailPic(result.assets[0].uri);
+      for (let image of result.assets || []) {
+        // console.log("START TRAIL: " + image.uri);
+        const downloadURL = await uploadTrailPic(image.uri);
+        console.log('StartTrailModal' + downloadURL);
+        uploadedImages.push(downloadURL); //adding the url to the array
+      }
+      setImages(uploadedImages); //updating the state with the array of urls
+      setFormData({ ...formData, images: uploadedImages });
+    } else {
+      console.log('Image picking canceled');
+    }
+  };
+
+  const pickPrimaryImage = async () => {
+    console.log('Pick image button pressed');
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      allowsEditing: true,
+      aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
+      quality: 1,
+    });
+    if (!result.canceled) {
+      const downloadURL = await uploadTrailPic(result.assets[0].uri);
+      setPrimaryImage(downloadURL); 
+      setFormData({ ...formData, primaryImage: downloadURL });
+      
+    } else {
+      console.log('Image picking canceled');
+    }
   };
 
   // End the trail and show the modal
@@ -83,10 +168,12 @@ const StartTrailModal = () => {
 
     // Show the modal
     setModalVisible(true);
-    setFormData({
+    setFormData({ 
       ...formData,
-      time: Math.floor(elapsedTime / 60) + ' min ' + (elapsedTime % 60) + ' sec',
-      distance: distanceTraveled.toFixed(2) + ' miles',
+      time: elapsedTime, // changning from this to store raw data in db: Math.floor(elapsedTime / 60) + ' min ' + (elapsedTime % 60) + ' sec',
+      length: distanceTraveled, //chaning from this to store raw data in DB: distanceTraveled.toFixed(2) + ' miles',
+      city: startCity,
+      state: startState,
     });
   };
 
@@ -167,9 +254,15 @@ const StartTrailModal = () => {
       Alert.alert('Error', 'Failed to save the trail data.');
     }
 
+    try {
+      const trailData = await createTrail(formData, user.id);  
+    } catch (error) {
+      console.error('Create trail error:', error.message);
+      Alert.alert('Trail could not be created', error.message);
+    }
+
     setModalVisible(false); 
   };
-
   return (
     <View style={styles.container}>
       {loading ? (
@@ -239,17 +332,51 @@ const StartTrailModal = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter the trail name"
-              value={formData.trailName}
-              onChangeText={(text) => handleInputChange('trailName', text)}
+              value={formData.name}
+              onChangeText={(text) => handleInputChange('name', text)}
               placeholderTextColor="#A9A9A9"
             />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your rating (1-5)"
+            <Text style={styles.label}>Rating: {formData.rating.toFixed(1)}</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={5}
+              step={0.1}
               value={formData.rating}
-              onChangeText={(text) => handleInputChange('rating', text)}
-              placeholderTextColor="#A9A9A9"
-            />
+              onValueChange={(value) => handleInputChange('rating', Math.round(value * 10) / 10)}
+              minimumTrackTintColor="#1EB1FC"
+              maximumTrackTintColor="#d3d3d3"
+              thumbTintColor="#1EB1FC"
+            />  s
+            <Picker
+              selectedValue={formData.difficulty}
+              style={styles.picker}
+              onValueChange={(itemValue) => handleInputChange('difficulty', itemValue)}
+            >
+              <Picker.Item label="Select Difficulty" value="" />
+              <Picker.Item label="Very Easy" value="Very Easy" />
+              <Picker.Item label="Easy" value="Easy" />
+              <Picker.Item label="Moderate" value="Moderate" />
+              <Picker.Item label="Hard" value="Hard" />
+              <Picker.Item label="Very Hard" value="Very Hard" />
+              <Picker.Item label="Extreme" value="Extreme" />
+            </Picker>
+
+            <Button title="Upload Primary Image" onPress={pickPrimaryImage} />
+            <Button title="Upload Images" onPress={pickImages} />
+            <Text style={styles.uploadedImagesTitle}>Uploaded Primary Image:</Text>
+            <Image source={{ uri: primaryImage }} style={styles.uploadedImage} />
+            <Text style={styles.uploadedImagesTitle}>Uploaded Images:</Text>
+            {images.length > 0 && (
+              <View style={styles.uploadedImagesContainer}>
+                <ScrollView horizontal>
+                {images.map((image, index) => {
+                  // console.log(`Image URL ${index}: ${image}`);
+                  return <Image key={index} source={{ uri: image }} style={styles.uploadedImage} />;
+                })}
+                </ScrollView>
+              </View>
+            )}
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
               <Text style={styles.submitButtonText}>Submit</Text>
             </TouchableOpacity>
@@ -317,6 +444,39 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
+  },
+  imageContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 10,
+  },
+  image: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  uploadedImagesContainer: {
+    //nothing for now
+  },
+  uploadedImagesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  uploadedImage: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+    marginBottom:20,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 10,
   },
 });
 
