@@ -2,8 +2,7 @@ name: Prod Server Deploy
 on:
   pull_request:
     branches: [ "main" ]
-  paths:
-        - 'server/**'
+  
 jobs:
   build:
 
