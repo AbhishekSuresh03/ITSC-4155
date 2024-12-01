@@ -1,8 +1,9 @@
 name: Prod Server Deploy
 on:
-  pull_request:
+  push:
     branches: [ "main" ]
-  
+  paths:
+        - 'server/**'
 jobs:
   build:
 
