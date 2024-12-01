@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
-import { createUser } from '../service/authService'; // Import the createUser function
+import { createUser, loginUser } from '../service/authService'; // Import the createUser function
 import { uploadProfilePic } from '../service/fileService';
+import { AuthContext } from '../context/AuthContext';
+
 
 /**
  * CreateAccountView component handles the user account creation process.
@@ -19,6 +21,7 @@ import { uploadProfilePic } from '../service/fileService';
  * @returns {JSX.Element} The rendered component.
  */
 export default function CreateAccountView({ navigation }) {
+  const { login } = useContext(AuthContext); 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     username: '',
@@ -55,7 +58,11 @@ export default function CreateAccountView({ navigation }) {
   const handleSubmit = async () => {
     try {
       console.log("test");
-      const userData = await createUser(formData);            //this maeks a user   =-=-=-LATER
+      const userData = await createUser(formData);            //this maeks a user 
+      console.log("CREATE USER RESPONSE: " + JSON.stringify(userData, null, 2));
+      const loginData = await loginUser(formData.username, formData.password); //this logs in the user | this is a lazy fix for that bug
+      console.log("LOGIN RESPONSE: " +  JSON.stringify(loginData, null, 2));
+      login(loginData); // saving user data in context and AsyncStorage
       navigation.navigate('Main');
       console.log(userData);
     } catch (error) {
