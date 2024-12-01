@@ -198,6 +198,25 @@ const StartTrailModal = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in miles
   };
+  const smoothCoordinates = (coordinates) => {
+    if (coordinates.length < 3) return coordinates;
+  
+    const smoothed = [];
+    for (let i = 1; i < coordinates.length - 1; i++) {
+      const prev = coordinates[i - 1];
+      const curr = coordinates[i];
+      const next = coordinates[i + 1];
+  
+      // Average latitude and longitude
+      const avgLat = (prev.latitude + curr.latitude + next.latitude) / 3;
+      const avgLon = (prev.longitude + curr.longitude + next.longitude) / 3;
+  
+      smoothed.push({ latitude: avgLat, longitude: avgLon });
+    }
+  
+    return smoothed;
+  };
+  
 
   // Track the user's location while the trail is active
   useEffect(() => {
@@ -205,13 +224,24 @@ const StartTrailModal = () => {
     if (trailActive) {
       const watchLocation = async () => {
         locationSubscription = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.BestForNavigation, distanceInterval: 5 },
+          {
+            accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
+            distanceInterval: 1, // Update every 1 meter
+            timeInterval: 1000, // Update every 1 second
+          },
           (newLocation) => {
-            const newCoords = { latitude: newLocation.coords.latitude, longitude: newLocation.coords.longitude };
+            const newCoords = {
+              latitude: newLocation.coords.latitude,
+              longitude: newLocation.coords.longitude,
+            };
             
             if (location) {
               const distance = calculateDistance(location, newLocation.coords);
               setDistanceTraveled((prevDistance) => prevDistance + distance);
+            }
+
+            if (!location || calculateDistance(location, newCoords) > 0.01) {
+              setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
             }
         
             setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]); // Append new coordinates
@@ -292,7 +322,7 @@ const StartTrailModal = () => {
               )}
               <Marker coordinate={location} title="Your Location" />
               <Polyline
-                coordinates={routeCoordinates} // Pass the route coordinates
+                coordinates={smoothCoordinates(routeCoordinates)} // Pass the route coordinates
                 strokeWidth={3}
                 strokeColor="blue"
               />
