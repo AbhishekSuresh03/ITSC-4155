@@ -98,6 +98,7 @@ public class UserService {
         existingUser.setState(newUser.getState());
         existingUser.setProfilePicture(newUser.getProfilePicture());
         existingUser.setTrails(newUser.getTrails());
+        //TODO: Update this to accomodate new fields on User model
     }
 
     public User followUser(String currentUserId, String userIdToFollow) {
