@@ -221,37 +221,41 @@ const StartTrailModal = () => {
   // Track the user's location while the trail is active
   useEffect(() => {
     let locationSubscription;
-    if (trailActive) {
-      const watchLocation = async () => {
-        locationSubscription = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
-            distanceInterval: 1, // Update every 1 meter
-            timeInterval: 1000, // Update every 1 second
-          },
-          (newLocation) => {
-            const newCoords = {
-              latitude: newLocation.coords.latitude,
-              longitude: newLocation.coords.longitude,
-            };
-            
-            if (location) {
+    
+    const watchLocation = async () => {
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
+          distanceInterval: 1, // Update every 1 meter
+          timeInterval: 1000, // Update every 1 second
+        },
+        (newLocation) => {
+          const newCoords = {
+            latitude: newLocation.coords.latitude,
+            longitude: newLocation.coords.longitude,
+          };
+          
+          if(trailActive){
+            if (location) { //will only calculate the distance if there is a previous location. IE a spot that it can compare to
               const distance = calculateDistance(location, newLocation.coords);
               setDistanceTraveled((prevDistance) => prevDistance + distance);
             }
-
-            if (!location || calculateDistance(location, newCoords) > 0.01) {
-              setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
-            }
-        
-            setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]); // Append new coordinates
-            setLocation(newLocation.coords);
+            
+            //if there is not a spot for it to compare to, its fair to assume that the the app just started and no initial location was set
+            //  so if thats the case then just append the new location as the start of the route
+            //  if there was a previous location, then it will verify that distance between the two is greater than 0.01 miles
+            //  before appending the new location to the route
+            //  if (!location || calculateDistance(location, newCoords) > 0.001) { 
+            setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+            // }
           }
-        );
-        
-      };
-      watchLocation();
-    }
+          setLocation(newLocation.coords);
+        }
+      );
+      
+    };
+    watchLocation();
+    
 
     return () => {
       if (locationSubscription) locationSubscription.remove();
@@ -268,29 +272,29 @@ const StartTrailModal = () => {
     const filePath = FileSystem.documentDirectory + 'trail_data.json'; // Path to save the JSON file
 
     const dataToSave = JSON.stringify(formData, null, 2); // Convert form data to JSON
+    console.log(formData);
+    // try {
+    //   // Write JSON data to file
+    //   await FileSystem.writeAsStringAsync(filePath, dataToSave);
+    //   Alert.alert('Success', 'Trail data saved successfully!');
 
-    try {
-      // Write JSON data to file
-      await FileSystem.writeAsStringAsync(filePath, dataToSave);
-      Alert.alert('Success', 'Trail data saved successfully!');
+    //   // Check if the file exists using getInfoAsync
+    //   const fileInfo = await FileSystem.getInfoAsync(filePath);
 
-      // Check if the file exists using getInfoAsync
-      const fileInfo = await FileSystem.getInfoAsync(filePath);
+    //   if (fileInfo.exists) {
+    //     console.log('File exists at path:', filePath);
+    //     console.log('File size (bytes):', fileInfo.size);  // Log the file size for extra info
 
-      if (fileInfo.exists) {
-        console.log('File exists at path:', filePath);
-        console.log('File size (bytes):', fileInfo.size);  // Log the file size for extra info
-
-        // Optionally, read the content of the file to verify the saved data
-        const fileContent = await FileSystem.readAsStringAsync(filePath);
-        console.log('File content:', fileContent); // Log the content to check if data was written
-      } else {
-        console.log('File does not exist.');
-      }
-    } catch (error) {
-      console.error('Error saving file:', error);
-      Alert.alert('Error', 'Failed to save the trail data.');
-    }
+    //     // Optionally, read the content of the file to verify the saved data
+    //     const fileContent = await FileSystem.readAsStringAsync(filePath);
+    //     console.log('File content:', fileContent); // Log the content to check if data was written
+    //   } else {
+    //     console.log('File does not exist.');
+    //   }
+    // } catch (error) {
+    //   console.error('Error saving file:', error);
+    //   Alert.alert('Error', 'Failed to save the trail data.');
+    // }
 
     try {
       const trailData = await createTrail(formData, user.id);  
@@ -317,9 +321,7 @@ const StartTrailModal = () => {
                 longitudeDelta: 0.01,
               }}
             >
-              {trailStartLocation && (
-                <Marker coordinate={trailStartLocation} title="Start Point" />
-              )}
+              
               <Marker coordinate={location} title="Your Location" />
               <Polyline
                 coordinates={smoothCoordinates(routeCoordinates)} // Pass the route coordinates

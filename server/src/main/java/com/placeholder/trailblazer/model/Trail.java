@@ -29,4 +29,14 @@ public class Trail {
     private User owner;
     private Date date;
     private String description;
+    private List<Coordinate> route;
+    
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Coordinate {
+        private Double latitude;
+        private Double longitude;
+    }
+
 }
