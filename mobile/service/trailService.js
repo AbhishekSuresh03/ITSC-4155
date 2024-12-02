@@ -1,6 +1,7 @@
 import {
     PRODUCTION_BACKEND_URL,
-    DEVELOPMENT_BACKEND_URL
+    DEVELOPMENT_BACKEND_URL,
+    LOCAL_BACKEND_URL
   } from "@env"; // Import environment variables
 const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/trails`;
 

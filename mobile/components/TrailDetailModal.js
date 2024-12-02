@@ -1,13 +1,16 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { formatDate, formatTime, formatPace } from '../utils/formattingUtil';
+import MapView, { Polyline } from 'react-native-maps';
+import {smoothCoordinates} from '../utils/locationUtil';
 
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
 export default function TrailDetailModal({ visible, onClose, trail }) {
   if (!trail) return null;
+  const mapRef = useRef(null)
 
   return (
     <Modal
@@ -42,6 +45,24 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
               </View>
               <Text style={styles.trailDescription}>{trail.description}</Text>
               <View style={styles.separator} />
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                onLayout={() => {
+                  if (trail.route && trail.route.length > 0) {
+                    mapRef.current.fitToCoordinates(trail.route, {
+                      edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                      animated: true,
+                    });
+                  }
+                }}
+              >
+                <Polyline
+                  coordinates={smoothCoordinates(trail.route)}
+                  strokeWidth={3}
+                  strokeColor="#007AFF"
+                />
+              </MapView>
             </View>
           </ScrollView>
         </View>
@@ -148,5 +169,10 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold',
+  },
+  map: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
   },
 });

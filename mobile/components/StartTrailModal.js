@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext} from 'react';
+import React, { useState, useEffect, useContext, useRef} from 'react';
 import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Polyline, AnimatedRegion, Animated } from 'react-native-maps';
 import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
 import * as ImagePicker from 'expo-image-picker';
 import { uploadTrailPic } from '../service/fileService';
@@ -9,8 +9,11 @@ import { createTrail } from '../service/trailService'; // Import createTrail fun
 import { AuthContext } from '../context/AuthContext';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
+import { smoothCoordinates } from '../utils/locationUtil';
+import CustomMarker from '../components/CustomMarker'; // Import CustomMarker
 
 const StartTrailModal = () => {
+  const mapRef = useRef(null); // Create a ref for MapView
   const { user } = useContext(AuthContext); // Access user from AuthContext
   const [location, setLocation] = useState(null);
   const [trailActive, setTrailActive] = useState(false);
@@ -24,6 +27,8 @@ const StartTrailModal = () => {
   const[primaryImage, setPrimaryImage] = useState('');
   const[startCity, setStartCity] = useState('');
   const[startState, setStartState] = useState('');
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [markerLocation, setMarkerLocation] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -81,7 +86,16 @@ const StartTrailModal = () => {
   useEffect(() => {
     const initializeLocation = async () => {
       const initialLocation = await fetchLocation();
-      if (initialLocation) setLocation(initialLocation);
+      if (initialLocation) 
+        setLocation(initialLocation); //true location
+        setMarkerLocation(
+          new AnimatedRegion({
+            latitude: initialLocation.latitude,
+            longitude: initialLocation.longitude,
+            latitudeDelta: 0,
+            longitudeDelta: 0,
+          })
+        ); //where the marker is on the map, sometimes these are different for visual purposes
       setLoading(false);
     };
     initializeLocation();
@@ -89,11 +103,11 @@ const StartTrailModal = () => {
 
   // Start tracking the trail
   const startTrail = async () => {
-    const currentLocation = await fetchLocation();
+    const currentLocation = location
     if (!currentLocation) return;
 
     setTrailStartLocation(currentLocation);
-    setLocation(currentLocation);
+    setRouteCoordinates([]); // Clear the polyline coordinates for a new trail
     //added by hunter to automatically populate city and state based on start location
     let cityAndState = await getCityAndState(currentLocation.latitude, currentLocation.longitude); //this is terrible code I know, i just want to finish this
     setStartCity(cityAndState.city);
@@ -174,6 +188,7 @@ const StartTrailModal = () => {
       length: distanceTraveled, //chaning from this to store raw data in DB: distanceTraveled.toFixed(2) + ' miles',
       city: startCity,
       state: startState,
+      route: routeCoordinates,
     });
   };
 
@@ -195,25 +210,92 @@ const StartTrailModal = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in miles
   };
+  
 
   // Track the user's location while the trail is active
   useEffect(() => {
     let locationSubscription;
-    if (trailActive) {
-      const watchLocation = async () => {
-        locationSubscription = await Location.watchPositionAsync(
-          { accuracy: Location.Accuracy.High, distanceInterval: 5 }, // Update every 5 meters
-          (newLocation) => {
-            if (location) {
+    if(markerLocation == null){
+      //set this up to initialize it if necessary
+    }
+    const watchLocation = async () => {
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
+          distanceInterval: 1, // Update every 1 meter
+          timeInterval: 1000, // Update every 1 second
+        },
+        (newLocation) => {
+          const newCoords = {
+            latitude: newLocation.coords.latitude,
+            longitude: newLocation.coords.longitude,
+          };
+          //backup failsafe initialization of marker location. this is terrible im so tired of this
+          //i do not like javascript
+          if(markerLocation == null){
+            setMarkerLocation(
+              new AnimatedRegion({
+                latitude: newCoords.latitude,
+                longitude: newCoords.longitude,
+                latitudeDelta: 0,
+                longitudeDelta: 0,
+              })
+            );
+          }
+
+          const markerCoordinates = { //this naming is terrible, i just need to convert the markerLocation from an AnimatedRegion to a normal
+            latitude: markerLocation.latitude.__getValue(),
+            longitude: markerLocation.longitude.__getValue(),
+          }
+          const markerDistance = calculateDistance(markerCoordinates, newLocation.coords);
+          console.log('Marker Distance: ' + markerDistance);
+          if(trailActive){
+            if (location) { //will only calculate the distance if there is a previous location. IE a spot that it can compare to
               const distance = calculateDistance(location, newLocation.coords);
               setDistanceTraveled((prevDistance) => prevDistance + distance);
             }
+            
+            //if there is not a spot for it to compare to, its fair to assume that the the app just started and no initial location was set
+            //  so if thats the case then just append the new location as the start of the route
+            //  if there was a previous location, then it will verify that distance between the two is greater than 0.01 miles
+            //  before appending the new location to the route
+            //  if (!location || calculateDistance(location, newCoords) > 0.001) { 
+            //^^^ this is the old code, it was not working as intended so I changed it to the following that just makes sure the locations are not identical
+            if(!location || (location.latitude != newCoords.latitude && location.longitude != newCoords.longitude)){ //ensure location changed
+              setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+              markerLocation.timing(newCoords).start();
+            } else {
+              console.log('Location did not change');
+            }
+            
+             // Smoothly animate marker to new location //if the trail is active, it should follow the last appended location in the route
+            // }
+          } else {
+            markerLocation.timing(newCoords).start(); // Smoothly animate marker to new location //if the trail is not active, it should follow users true location
+          }
+          if(!location || location.latitude != newCoords.latitude && location.longitude != newCoords.longitude){
+            // console.log(markerLocation)
             setLocation(newLocation.coords);
           }
-        );
-      };
-      watchLocation();
-    }
+
+          // Smoothly animate map to the new location
+          // if (mapRef.current) {
+          //   mapRef.current.animateCamera(
+          //     {
+          //       center: {
+          //         latitude: newCoords.latitude,
+          //         longitude: newCoords.longitude,
+          //       },
+          //     },
+          //     { duration: 1000 } // Smooth animation duration in milliseconds
+          //   );
+          // }
+        }
+      );
+      
+    };
+    watchLocation();
+    
 
     return () => {
       if (locationSubscription) locationSubscription.remove();
@@ -230,29 +312,29 @@ const StartTrailModal = () => {
     const filePath = FileSystem.documentDirectory + 'trail_data.json'; // Path to save the JSON file
 
     const dataToSave = JSON.stringify(formData, null, 2); // Convert form data to JSON
+    console.log(formData);
+    // try {
+    //   // Write JSON data to file
+    //   await FileSystem.writeAsStringAsync(filePath, dataToSave);
+    //   Alert.alert('Success', 'Trail data saved successfully!');
 
-    try {
-      // Write JSON data to file
-      await FileSystem.writeAsStringAsync(filePath, dataToSave);
-      Alert.alert('Success', 'Trail data saved successfully!');
+    //   // Check if the file exists using getInfoAsync
+    //   const fileInfo = await FileSystem.getInfoAsync(filePath);
 
-      // Check if the file exists using getInfoAsync
-      const fileInfo = await FileSystem.getInfoAsync(filePath);
+    //   if (fileInfo.exists) {
+    //     console.log('File exists at path:', filePath);
+    //     console.log('File size (bytes):', fileInfo.size);  // Log the file size for extra info
 
-      if (fileInfo.exists) {
-        console.log('File exists at path:', filePath);
-        console.log('File size (bytes):', fileInfo.size);  // Log the file size for extra info
-
-        // Optionally, read the content of the file to verify the saved data
-        const fileContent = await FileSystem.readAsStringAsync(filePath);
-        console.log('File content:', fileContent); // Log the content to check if data was written
-      } else {
-        console.log('File does not exist.');
-      }
-    } catch (error) {
-      console.error('Error saving file:', error);
-      Alert.alert('Error', 'Failed to save the trail data.');
-    }
+    //     // Optionally, read the content of the file to verify the saved data
+    //     const fileContent = await FileSystem.readAsStringAsync(filePath);
+    //     console.log('File content:', fileContent); // Log the content to check if data was written
+    //   } else {
+    //     console.log('File does not exist.');
+    //   }
+    // } catch (error) {
+    //   console.error('Error saving file:', error);
+    //   Alert.alert('Error', 'Failed to save the trail data.');
+    // }
 
     try {
       const trailData = await createTrail(formData, user.id);  
@@ -275,15 +357,24 @@ const StartTrailModal = () => {
               initialRegion={{
                 latitude: location.latitude,
                 longitude: location.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitudeDelta: 0.007,
+                longitudeDelta: 0.007,
               }}
             >
-              {trailStartLocation && (
-                <Marker coordinate={trailStartLocation} title="Start Point" />
-              )}
-              <Marker coordinate={location} title="Your Location" />
-            </MapView>
+              
+          <Marker.Animated
+            coordinate={markerLocation}
+            title="Your Location"
+          >
+              <CustomMarker />
+          </Marker.Animated>
+              <Polyline
+                coordinates={routeCoordinates} // Pass the route coordinates
+                strokeWidth={3}
+                strokeColor="#007AFF"
+              />
+          </MapView>
+          
           )}
           <View style={styles.infoContainer}>
             {trailActive && (
@@ -371,7 +462,6 @@ const StartTrailModal = () => {
               <View style={styles.uploadedImagesContainer}>
                 <ScrollView horizontal>
                 {images.map((image, index) => {
-                  // console.log(`Image URL ${index}: ${image}`);
                   return <Image key={index} source={{ uri: image }} style={styles.uploadedImage} />;
                 })}
                 </ScrollView>
@@ -481,3 +571,6 @@ const styles = StyleSheet.create({
 });
 
 export default StartTrailModal;
+
+
+
