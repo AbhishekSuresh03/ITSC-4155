@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef} from 'react';
 import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
-import MapView, { Marker, Polyline } from 'react-native-maps';
+import MapView, { Marker, Polyline, AnimatedRegion, Animated } from 'react-native-maps';
 import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
 import * as ImagePicker from 'expo-image-picker';
 import { uploadTrailPic } from '../service/fileService';
@@ -9,6 +9,7 @@ import { createTrail } from '../service/trailService'; // Import createTrail fun
 import { AuthContext } from '../context/AuthContext';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
+import { smoothCoordinates } from '../utils/locationUtil';
 
 const StartTrailModal = () => {
   const mapRef = useRef(null); // Create a ref for MapView
@@ -26,6 +27,7 @@ const StartTrailModal = () => {
   const[startCity, setStartCity] = useState('');
   const[startState, setStartState] = useState('');
   const [routeCoordinates, setRouteCoordinates] = useState([]);
+  const [markerLocation, setMarkerLocation] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -83,7 +85,9 @@ const StartTrailModal = () => {
   useEffect(() => {
     const initializeLocation = async () => {
       const initialLocation = await fetchLocation();
-      if (initialLocation) setLocation(initialLocation);
+      if (initialLocation) 
+        setLocation(initialLocation); //true location
+        setMarkerLocation(initialLocation); //where the marker is on the map, sometimes these are different for visual purposes
       setLoading(false);
     };
     initializeLocation();
@@ -91,11 +95,10 @@ const StartTrailModal = () => {
 
   // Start tracking the trail
   const startTrail = async () => {
-    const currentLocation = await fetchLocation();
+    const currentLocation = location
     if (!currentLocation) return;
 
     setTrailStartLocation(currentLocation);
-    setLocation(currentLocation);
     setRouteCoordinates([]); // Clear the polyline coordinates for a new trail
     //added by hunter to automatically populate city and state based on start location
     let cityAndState = await getCityAndState(currentLocation.latitude, currentLocation.longitude); //this is terrible code I know, i just want to finish this
@@ -199,24 +202,6 @@ const StartTrailModal = () => {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in miles
   };
-  const smoothCoordinates = (coordinates) => {
-    if (coordinates.length < 3) return coordinates;
-  
-    const smoothed = [];
-    for (let i = 1; i < coordinates.length - 1; i++) {
-      const prev = coordinates[i - 1];
-      const curr = coordinates[i];
-      const next = coordinates[i + 1];
-  
-      // Average latitude and longitude
-      const avgLat = (prev.latitude + curr.latitude + next.latitude) / 3;
-      const avgLon = (prev.longitude + curr.longitude + next.longitude) / 3;
-  
-      smoothed.push({ latitude: avgLat, longitude: avgLon });
-    }
-  
-    return smoothed;
-  };
   
 
   // Track the user's location while the trail is active
@@ -252,7 +237,10 @@ const StartTrailModal = () => {
             } else {
               console.log('Location did not change');
             }
+            setMarkerLocation(newCoords); //if the trail is active, it should follow the last appended location in the route
             // }
+          } else {
+            setMarkerLocation(location); //if the trail is not active, it should follow users true location
           }
           if(!location || location.latitude != newCoords.latitude && location.longitude != newCoords.longitude){
             setLocation(newLocation.coords);
@@ -342,9 +330,9 @@ const StartTrailModal = () => {
               }}
             >
               
-              <Marker coordinate={location} title="Your Location" />
+              <Marker coordinate={markerLocation} title="Your Location" />
               <Polyline
-                coordinates={smoothCoordinates(routeCoordinates)} // Pass the route coordinates
+                coordinates={routeCoordinates} // Pass the route coordinates
                 strokeWidth={3}
                 strokeColor="blue"
               />

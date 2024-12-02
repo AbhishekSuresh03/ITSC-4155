@@ -3,6 +3,7 @@ import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } fr
 import { Icon } from 'react-native-elements';
 import { formatDate, formatTime, formatPace } from '../utils/formattingUtil';
 import MapView, { Polyline } from 'react-native-maps';
+import {smoothCoordinates} from '../utils/locationUtil';
 
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
@@ -57,7 +58,7 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
                 }}
               >
                 <Polyline
-                  coordinates={trail.route}
+                  coordinates={smoothCoordinates(trail.route)}
                   strokeWidth={3}
                   strokeColor="blue"
                 />
