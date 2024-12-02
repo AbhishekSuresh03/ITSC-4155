@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext} from 'react';
+import React, { useState, useEffect, useContext, useRef} from 'react';
 import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker, Polyline } from 'react-native-maps';
@@ -11,6 +11,7 @@ import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 
 const StartTrailModal = () => {
+  const mapRef = useRef(null); // Create a ref for MapView
   const { user } = useContext(AuthContext); // Access user from AuthContext
   const [location, setLocation] = useState(null);
   const [trailActive, setTrailActive] = useState(false);
@@ -246,10 +247,29 @@ const StartTrailModal = () => {
             //  if there was a previous location, then it will verify that distance between the two is greater than 0.01 miles
             //  before appending the new location to the route
             //  if (!location || calculateDistance(location, newCoords) > 0.001) { 
-            setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+            if(!location || (location.latitude != newCoords.latitude && location.longitude != newCoords.longitude)){ //ensure location changed
+              setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+            } else {
+              console.log('Location did not change');
+            }
             // }
           }
-          setLocation(newLocation.coords);
+          if(!location || location.latitude != newCoords.latitude && location.longitude != newCoords.longitude){
+            setLocation(newLocation.coords);
+          }
+
+          // Smoothly animate map to the new location
+          // if (mapRef.current) {
+          //   mapRef.current.animateCamera(
+          //     {
+          //       center: {
+          //         latitude: newCoords.latitude,
+          //         longitude: newCoords.longitude,
+          //       },
+          //     },
+          //     { duration: 1000 } // Smooth animation duration in milliseconds
+          //   );
+          // }
         }
       );
       
@@ -317,8 +337,8 @@ const StartTrailModal = () => {
               initialRegion={{
                 latitude: location.latitude,
                 longitude: location.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
+                latitudeDelta: 0.007,
+                longitudeDelta: 0.007,
               }}
             >
               
