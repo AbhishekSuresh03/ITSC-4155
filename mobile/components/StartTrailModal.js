@@ -10,6 +10,7 @@ import { AuthContext } from '../context/AuthContext';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import { smoothCoordinates } from '../utils/locationUtil';
+import CustomMarker from '../components/CustomMarker'; // Import CustomMarker
 
 const StartTrailModal = () => {
   const mapRef = useRef(null); // Create a ref for MapView
@@ -87,7 +88,14 @@ const StartTrailModal = () => {
       const initialLocation = await fetchLocation();
       if (initialLocation) 
         setLocation(initialLocation); //true location
-        setMarkerLocation(initialLocation); //where the marker is on the map, sometimes these are different for visual purposes
+        setMarkerLocation(
+          new AnimatedRegion({
+            latitude: initialLocation.latitude,
+            longitude: initialLocation.longitude,
+            latitudeDelta: 0,
+            longitudeDelta: 0,
+          })
+        ); //where the marker is on the map, sometimes these are different for visual purposes
       setLoading(false);
     };
     initializeLocation();
@@ -207,7 +215,9 @@ const StartTrailModal = () => {
   // Track the user's location while the trail is active
   useEffect(() => {
     let locationSubscription;
-    
+    if(markerLocation == null){
+      //set this up to initialize it if necessary
+    }
     const watchLocation = async () => {
       locationSubscription = await Location.watchPositionAsync(
         {
@@ -220,7 +230,25 @@ const StartTrailModal = () => {
             latitude: newLocation.coords.latitude,
             longitude: newLocation.coords.longitude,
           };
-          
+          //backup failsafe initialization of marker location. this is terrible im so tired of this
+          //i do not like javascript
+          if(markerLocation == null){
+            setMarkerLocation(
+              new AnimatedRegion({
+                latitude: newCoords.latitude,
+                longitude: newCoords.longitude,
+                latitudeDelta: 0,
+                longitudeDelta: 0,
+              })
+            );
+          }
+
+          const markerCoordinates = { //this naming is terrible, i just need to convert the markerLocation from an AnimatedRegion to a normal
+            latitude: markerLocation.latitude.__getValue(),
+            longitude: markerLocation.longitude.__getValue(),
+          }
+          const markerDistance = calculateDistance(markerCoordinates, newLocation.coords);
+          console.log('Marker Distance: ' + markerDistance);
           if(trailActive){
             if (location) { //will only calculate the distance if there is a previous location. IE a spot that it can compare to
               const distance = calculateDistance(location, newLocation.coords);
@@ -232,17 +260,21 @@ const StartTrailModal = () => {
             //  if there was a previous location, then it will verify that distance between the two is greater than 0.01 miles
             //  before appending the new location to the route
             //  if (!location || calculateDistance(location, newCoords) > 0.001) { 
+            //^^^ this is the old code, it was not working as intended so I changed it to the following that just makes sure the locations are not identical
             if(!location || (location.latitude != newCoords.latitude && location.longitude != newCoords.longitude)){ //ensure location changed
               setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+              markerLocation.timing(newCoords).start();
             } else {
               console.log('Location did not change');
             }
-            setMarkerLocation(newCoords); //if the trail is active, it should follow the last appended location in the route
+            
+             // Smoothly animate marker to new location //if the trail is active, it should follow the last appended location in the route
             // }
           } else {
-            setMarkerLocation(location); //if the trail is not active, it should follow users true location
+            markerLocation.timing(newCoords).start(); // Smoothly animate marker to new location //if the trail is not active, it should follow users true location
           }
           if(!location || location.latitude != newCoords.latitude && location.longitude != newCoords.longitude){
+            // console.log(markerLocation)
             setLocation(newLocation.coords);
           }
 
@@ -330,11 +362,16 @@ const StartTrailModal = () => {
               }}
             >
               
-              <Marker coordinate={markerLocation} title="Your Location" />
+          <Marker.Animated
+            coordinate={markerLocation}
+            title="Your Location"
+          >
+              <CustomMarker />
+          </Marker.Animated>
               <Polyline
                 coordinates={routeCoordinates} // Pass the route coordinates
                 strokeWidth={3}
-                strokeColor="blue"
+                strokeColor="#007AFF"
               />
           </MapView>
           

@@ -60,7 +60,7 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
                 <Polyline
                   coordinates={smoothCoordinates(trail.route)}
                   strokeWidth={3}
-                  strokeColor="blue"
+                  strokeColor="#007AFF"
                 />
               </MapView>
             </View>
