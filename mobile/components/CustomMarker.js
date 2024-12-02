@@ -3,7 +3,7 @@ import { View, Animated, StyleSheet } from 'react-native';
 import usePulseAnimation from '../hooks/usePulseAnimation';
 
 const CustomMarker = () => {
-  const pulseAnim = usePulseAnimation(); // Use the custom hook
+  const pulseAnim = usePulseAnimation();
 
   return (
     <View style={styles.outerCircle}>

@@ -9,7 +9,7 @@ import { createTrail } from '../service/trailService'; // Import createTrail fun
 import { AuthContext } from '../context/AuthContext';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
-import { smoothCoordinates } from '../utils/locationUtil';
+import { smoothCoordinates, calculateDistance } from '../utils/locationUtil';
 import CustomMarker from '../components/CustomMarker'; // Import CustomMarker
 
 const StartTrailModal = () => {
@@ -17,6 +17,7 @@ const StartTrailModal = () => {
   const { user } = useContext(AuthContext); // Access user from AuthContext
   const [location, setLocation] = useState(null);
   const [trailActive, setTrailActive] = useState(false);
+  const trailActiveRef = useRef(trailActive); // Use ref to keep track of trailActive state
   const [trailStartLocation, setTrailStartLocation] = useState(null);
   const [distanceTraveled, setDistanceTraveled] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -29,6 +30,7 @@ const StartTrailModal = () => {
   const[startState, setStartState] = useState('');
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [markerLocation, setMarkerLocation] = useState(null);
+  const [initializedLocation, setInitializedLocation] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     city: '',
@@ -42,8 +44,88 @@ const StartTrailModal = () => {
     description: '', //TODO populate this
   }); // To store form data
 
-  // Request location permissions
-  const getLocationPermission = async () => {
+  // Initialize location on page load
+  useEffect(() => {
+    const initializeLocation = async () => {
+      console.log("initializing location")
+      const initialLocation = await fetchLocation();
+      if (initialLocation) 
+        setLocation(initialLocation); //true location
+        setMarkerLocation(
+          new AnimatedRegion({
+            latitude: initialLocation.latitude,
+            longitude: initialLocation.longitude,
+            latitudeDelta: 0,
+            longitudeDelta: 0,
+          })
+        ); //where the marker is on the map, sometimes these are different for visual purposes
+        setInitializedLocation(initialLocation);
+      console.log('initialized location at location: ' + initialLocation.latitude + ', ' + initialLocation.longitude);
+      setLoading(false);
+    };
+    initializeLocation();
+  }, []);
+
+  // Track the user's location
+  useEffect(() => {
+    let locationSubscription;
+    
+    console.log("attempting to start watching location")
+    const watchLocation = async () => {
+      if(markerLocation == null){
+        console.log("failed to start watching location, marker has not finished initaliziing")
+        return null;
+      }
+
+      console.log("watching location")
+      locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
+          distanceInterval: 2, // Update every 1 meter
+          // timeInterval: 10000, // Update every 1 second
+        },
+        (newLocation) => {
+          //getting new coordinates
+          const newCoords = {
+            latitude: newLocation.coords.latitude,
+            longitude: newLocation.coords.longitude,
+          };
+          //where the marker is currently
+          const markerCoordinates = { //this naming is terrible, i just need to convert the markerLocation from an AnimatedRegion to a normal
+            latitude: markerLocation.latitude.__getValue(),
+            longitude: markerLocation.longitude.__getValue(),
+          }
+          
+          if(trailActiveRef.current){ //if trail is active, it will start tracking the location | has to use a ref rather than the trailActive variable, but they have a direct relationship
+            console.log("moving marker: trail is active, appending coordinates to route")
+            //calculatating the distance between the current location (where the marker is) and the new location") 
+            const markerDistance = calculateDistance(markerCoordinates, newLocation.coords);
+            setDistanceTraveled((prevDistance) => prevDistance + markerDistance); //adding it to the total distance
+           
+            setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
+          } else {
+            console.log('moving marker, but trail is not active')
+          }
+          markerLocation.timing(newCoords).start(); // Smoothly animate marker to new location
+          setLocation(newLocation.coords); // i dont even know why I need the true location anymore but if i remove this things break 
+        }
+      );
+    };
+    watchLocation();
+    return () => {
+      console.log("stopping watching location")
+      if (locationSubscription) locationSubscription.remove();
+    };
+  }, [initializedLocation]);
+
+  //update the trailactive ref to be 1 to 1 with trailActive so that the watchlocation does need the trailActive as a dependency
+  //just trust me
+  useEffect(() => {
+    trailActiveRef.current = trailActive;
+  }, [trailActive]);
+
+   // Request location permissions
+   const getLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission Denied', 'Permission to access location was denied.');
@@ -65,7 +147,7 @@ const StartTrailModal = () => {
       return null;
     }
   };
-
+  
   async function getCityAndState(latitude, longitude) {
     try {
       const [address] = await Location.reverseGeocodeAsync({ latitude, longitude });
@@ -82,32 +164,14 @@ const StartTrailModal = () => {
     }
   }
 
-  // Initialize location on page load
-  useEffect(() => {
-    const initializeLocation = async () => {
-      const initialLocation = await fetchLocation();
-      if (initialLocation) 
-        setLocation(initialLocation); //true location
-        setMarkerLocation(
-          new AnimatedRegion({
-            latitude: initialLocation.latitude,
-            longitude: initialLocation.longitude,
-            latitudeDelta: 0,
-            longitudeDelta: 0,
-          })
-        ); //where the marker is on the map, sometimes these are different for visual purposes
-      setLoading(false);
-    };
-    initializeLocation();
-  }, []);
-
   // Start tracking the trail
   const startTrail = async () => {
     const currentLocation = location
     if (!currentLocation) return;
 
-    setTrailStartLocation(currentLocation);
-    setRouteCoordinates([]); // Clear the polyline coordinates for a new trail
+    setTrailStartLocation(currentLocation); //this might be redundant, but not deleting for now
+    setRouteCoordinates([currentLocation]); // Clear the route for a new one, initialize the current location as the start point (which is the first value)
+
     //added by hunter to automatically populate city and state based on start location
     let cityAndState = await getCityAndState(currentLocation.latitude, currentLocation.longitude); //this is terrible code I know, i just want to finish this
     setStartCity(cityAndState.city);
@@ -118,6 +182,71 @@ const StartTrailModal = () => {
     // Start the timer
     const timerId = setInterval(() => setElapsedTime((prev) => prev + 1), 1000);
     setIntervalId(timerId);
+  };
+
+  // End the trail and show the modal
+  const endTrail = () => {
+    console.log('ending trail')
+    setTrailActive(false);
+    setTrailStartLocation(null);
+    setElapsedTime(0); 
+    setDistanceTraveled(0);
+
+    // Clear the timer
+    clearInterval(intervalId);
+    setIntervalId(null);
+
+    // Show the modal
+    setModalVisible(true);
+    setFormData({ 
+      ...formData,
+      time: elapsedTime, // changning from this to store raw data in db: Math.floor(elapsedTime / 60) + ' min ' + (elapsedTime % 60) + ' sec',
+      length: distanceTraveled, //chaning from this to store raw data in DB: distanceTraveled.toFixed(2) + ' miles',
+      city: startCity,
+      state: startState,
+      route: routeCoordinates,
+    });
+  };
+
+  /**
+   * Handles the submission of the trail form data.
+   * 
+   * This function collects the form data, including trail details such as name, city, state, rating, difficulty, length, time, images, primary image, description, and route coordinates.
+   * It then sends this data to the backend to create a new trail.
+   * 
+   * Expected form data input:
+   * - name: The name of the trail (string).
+   * - city: The city where the trail is located (string).
+   * - state: The state where the trail is located (string).
+   * - rating: The rating of the trail (number).
+   * - difficulty: The difficulty level of the trail (string).
+   * - length: The length of the trail in miles (number).
+   * - time: The time taken to complete the trail in seconds (number).
+   * - images: An array of image URLs associated with the trail (array of strings).
+   * - primaryImage: The primary image URL for the trail (string).
+   * - description: A description of the trail (string).
+   * - route: An array of coordinates representing the trail route (array of objects with latitude and longitude properties).
+   * 
+   * @async
+   * @function handleSubmit
+   * @returns {Promise<void>} A promise that resolves when the form data has been successfully submitted.
+   */
+  const handleSubmit = async () => {
+    const dataToSave = JSON.stringify(formData, null, 2); // Convert form data to JSON
+    console.log(dataToSave);
+    try {
+      const trailData = await createTrail(formData, user.id);  
+    } catch (error) {
+      console.error('Create trail error:', error.message);
+      Alert.alert('Trail could not be created', error.message);
+    }
+
+    setModalVisible(false); 
+  };
+
+  // Handle form field changes
+  const handleInputChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   //IMAGE STUFF
@@ -169,182 +298,6 @@ const StartTrailModal = () => {
     }
   };
 
-  // End the trail and show the modal
-  const endTrail = () => {
-    setTrailActive(false);
-    setTrailStartLocation(null);
-    setElapsedTime(0);
-    setDistanceTraveled(0);
-
-    // Clear the timer
-    clearInterval(intervalId);
-    setIntervalId(null);
-
-    // Show the modal
-    setModalVisible(true);
-    setFormData({ 
-      ...formData,
-      time: elapsedTime, // changning from this to store raw data in db: Math.floor(elapsedTime / 60) + ' min ' + (elapsedTime % 60) + ' sec',
-      length: distanceTraveled, //chaning from this to store raw data in DB: distanceTraveled.toFixed(2) + ' miles',
-      city: startCity,
-      state: startState,
-      route: routeCoordinates,
-    });
-  };
-
-  // Calculate distance between two locations (Haversine formula, converted to miles)
-  const calculateDistance = (loc1, loc2) => {
-    const toRad = (value) => (value * Math.PI) / 180;
-    const R = 3958.8; // Earth's radius in miles
-
-    const dLat = toRad(loc2.latitude - loc1.latitude);
-    const dLon = toRad(loc2.longitude - loc1.longitude);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(loc1.latitude)) *
-        Math.cos(toRad(loc2.latitude)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; // Distance in miles
-  };
-  
-
-  // Track the user's location while the trail is active
-  useEffect(() => {
-    let locationSubscription;
-    if(markerLocation == null){
-      //set this up to initialize it if necessary
-    }
-    const watchLocation = async () => {
-      locationSubscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.BestForNavigation, // Best possible accuracy for outdoor use
-          distanceInterval: 1, // Update every 1 meter
-          timeInterval: 1000, // Update every 1 second
-        },
-        (newLocation) => {
-          const newCoords = {
-            latitude: newLocation.coords.latitude,
-            longitude: newLocation.coords.longitude,
-          };
-          //backup failsafe initialization of marker location. this is terrible im so tired of this
-          //i do not like javascript
-          if(markerLocation == null){
-            setMarkerLocation(
-              new AnimatedRegion({
-                latitude: newCoords.latitude,
-                longitude: newCoords.longitude,
-                latitudeDelta: 0,
-                longitudeDelta: 0,
-              })
-            );
-          }
-
-          const markerCoordinates = { //this naming is terrible, i just need to convert the markerLocation from an AnimatedRegion to a normal
-            latitude: markerLocation.latitude.__getValue(),
-            longitude: markerLocation.longitude.__getValue(),
-          }
-          const markerDistance = calculateDistance(markerCoordinates, newLocation.coords);
-          console.log('Marker Distance: ' + markerDistance);
-          if(trailActive){
-            if (location) { //will only calculate the distance if there is a previous location. IE a spot that it can compare to
-              const distance = calculateDistance(location, newLocation.coords);
-              setDistanceTraveled((prevDistance) => prevDistance + distance);
-            }
-            
-            //if there is not a spot for it to compare to, its fair to assume that the the app just started and no initial location was set
-            //  so if thats the case then just append the new location as the start of the route
-            //  if there was a previous location, then it will verify that distance between the two is greater than 0.01 miles
-            //  before appending the new location to the route
-            //  if (!location || calculateDistance(location, newCoords) > 0.001) { 
-            //^^^ this is the old code, it was not working as intended so I changed it to the following that just makes sure the locations are not identical
-            if(!location || (location.latitude != newCoords.latitude && location.longitude != newCoords.longitude)){ //ensure location changed
-              setRouteCoordinates((prevCoords) => [...prevCoords, newCoords]);
-              markerLocation.timing(newCoords).start();
-            } else {
-              console.log('Location did not change');
-            }
-            
-             // Smoothly animate marker to new location //if the trail is active, it should follow the last appended location in the route
-            // }
-          } else {
-            markerLocation.timing(newCoords).start(); // Smoothly animate marker to new location //if the trail is not active, it should follow users true location
-          }
-          if(!location || location.latitude != newCoords.latitude && location.longitude != newCoords.longitude){
-            // console.log(markerLocation)
-            setLocation(newLocation.coords);
-          }
-
-          // Smoothly animate map to the new location
-          // if (mapRef.current) {
-          //   mapRef.current.animateCamera(
-          //     {
-          //       center: {
-          //         latitude: newCoords.latitude,
-          //         longitude: newCoords.longitude,
-          //       },
-          //     },
-          //     { duration: 1000 } // Smooth animation duration in milliseconds
-          //   );
-          // }
-        }
-      );
-      
-    };
-    watchLocation();
-    
-
-    return () => {
-      if (locationSubscription) locationSubscription.remove();
-    };
-  }, [trailActive, location]);
-
-  // Handle form field changes
-  const handleInputChange = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
-
-  // Handle form submission and save form data to a JSON file using Expo's FileSystem
-  const handleSubmit = async () => {
-    const filePath = FileSystem.documentDirectory + 'trail_data.json'; // Path to save the JSON file
-
-    const dataToSave = JSON.stringify(formData, null, 2); // Convert form data to JSON
-    console.log(formData);
-    // try {
-    //   // Write JSON data to file
-    //   await FileSystem.writeAsStringAsync(filePath, dataToSave);
-    //   Alert.alert('Success', 'Trail data saved successfully!');
-
-    //   // Check if the file exists using getInfoAsync
-    //   const fileInfo = await FileSystem.getInfoAsync(filePath);
-
-    //   if (fileInfo.exists) {
-    //     console.log('File exists at path:', filePath);
-    //     console.log('File size (bytes):', fileInfo.size);  // Log the file size for extra info
-
-    //     // Optionally, read the content of the file to verify the saved data
-    //     const fileContent = await FileSystem.readAsStringAsync(filePath);
-    //     console.log('File content:', fileContent); // Log the content to check if data was written
-    //   } else {
-    //     console.log('File does not exist.');
-    //   }
-    // } catch (error) {
-    //   console.error('Error saving file:', error);
-    //   Alert.alert('Error', 'Failed to save the trail data.');
-    // }
-
-    try {
-      const trailData = await createTrail(formData, user.id);  
-    } catch (error) {
-      console.error('Create trail error:', error.message);
-      Alert.alert('Trail could not be created', error.message);
-    }
-
-    setModalVisible(false); 
-  };
   return (
     <View style={styles.container}>
       {loading ? (
@@ -369,7 +322,7 @@ const StartTrailModal = () => {
               <CustomMarker />
           </Marker.Animated>
               <Polyline
-                coordinates={routeCoordinates} // Pass the route coordinates
+                coordinates={routeCoordinates}
                 strokeWidth={3}
                 strokeColor="#007AFF"
               />
@@ -396,7 +349,6 @@ const StartTrailModal = () => {
         </>
       )}
 
-      {/* Modal for submitting trail info */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -438,7 +390,7 @@ const StartTrailModal = () => {
               minimumTrackTintColor="#1EB1FC"
               maximumTrackTintColor="#d3d3d3"
               thumbTintColor="#1EB1FC"
-            />  s
+            />
             <Picker
               selectedValue={formData.difficulty}
               style={styles.picker}
