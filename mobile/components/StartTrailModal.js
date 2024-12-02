@@ -118,7 +118,7 @@ const StartTrailModal = () => {
     };
   }, [initializedLocation]);
 
-  //update the trailactive ref to be 1 to 1 with trailActive so that the watchlocation does need the trailActive as a dependency
+  //update the trailActiveRef to be 1 to 1 with trailActive so that the watchlocation does need the trailActive as a dependency
   //just trust me
   useEffect(() => {
     trailActiveRef.current = trailActive;
