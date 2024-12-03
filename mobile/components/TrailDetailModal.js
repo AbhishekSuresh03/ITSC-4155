@@ -62,9 +62,9 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
             <Icon name="close" size={24} color="#fff" />
           </TouchableOpacity>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }} style={{ width: '100%' }}>
-          <Image source={{uri: trail.primaryImage}} style={styles.trailImage} />
+            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
             <View style={styles.headerContainer}>
-              <Image source={{uri: trail.owner.profilePicture}} style={styles.profilePicture} />
+              <Image source={{ uri: trail.owner.profilePicture }} style={styles.profilePicture} />
               <Text style={styles.userName}>{trail.owner.username}</Text>
             </View>
             <Text style={styles.trailName}>{trail.name}</Text>
@@ -91,18 +91,41 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
               </View>
               <Text style={styles.trailDescription}>{trail.description}</Text>
               <View style={styles.separator} />
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                mapType="satellite"
+                onLayout={() => {
+                  if (trail.route && trail.route.length > 0) {
+                    mapRef.current.fitToCoordinates(trail.route, {
+                      edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                      animated: true,
+                    });
+                  }
+                }}
+              >
+                <Polyline
+                  coordinates={smoothCoordinates(trail.route)}
+                  strokeWidth={3}
+                  strokeColor="#007AFF"
+                />
+              </MapView>
+              <ScrollView horizontal style={styles.extraImagesContainer}>
+                {trail.images.map((image, index) => (
+                  <View key={index} style={styles.extraImageWrapper}>
+                    <Image source={{ uri: image }} style={styles.extraImage} />
+                  </View>
+                ))}
+              </ScrollView>
             </View>
           </ScrollView>
-          {isSaved ? (
-            <Button title="Unsave Trail" onPress={handleUnsave} />
-          ) : (
-            <Button title="Save Trail" onPress={handleSave} />
-          )}
         </View>
       </View>
     </Modal>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   modalContainer: {
@@ -119,9 +142,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  scrollViewContent: {
-    padding: -10,
-    },
   closeButton: {
     position: 'absolute',
     top: 45,
@@ -133,48 +153,47 @@ const styles = StyleSheet.create({
   },
   trailImage: {
     width: '100%',
-    height: 230, 
+    height: 230, // Adjusted to be slightly more rectangular
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    paddingVertical: 10, 
+    paddingVertical: 10, // Added padding for better spacing
     paddingHorizontal: 10,
   },
   profilePicture: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10, 
+    marginRight: 10, // Added margin for spacing
   },
   userName: {
     fontSize: 18,
     fontWeight: 'bold',
-
   },
   trailName: {
-    fontSize: 38, // Make the trail name even bigger
+    fontSize: 32,
     fontWeight: 'bold',
-    marginTop: -10, // Adjust margin to make it closer to the header
-    textAlign: 'left', // Align text to the left
-    width: '100%', // Ensure it spans the full width
-    paddingHorizontal: 20, // Add padding to match the header
+    marginTop: -5,
+    textAlign: 'left',
+    width: '100%',
+    paddingHorizontal: 20,
   },
   trailInfo: {
-    padding: 20,
-    width: '100%', // Ensure it spans the full width
+    paddingHorizontal: 20,
+    width: '100%',
   },
   ratingContainer: {
-    flexDirection: 'row', // Align star and rating number in a row
-    alignItems: 'center', // Center items vertically
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop:5,
     marginBottom: 10,
   },
   trailRating: {
-    marginTop: 6,
-    fontSize: 20, // Increased font size for the rating number
+    marginLeft: 5,
+    fontSize: 20,
     color: 'grey',
-    marginLeft: 2, // Reduce space between the star and the rating number
   },
   separator: {
     height: 1,
@@ -187,14 +206,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  
   trailDescription: {
     fontSize: 14,
     color: 'grey',
-    marginTop: 25,
+    marginTop: 0,
     marginBottom: 10,
-    textAlign: 'left', // Align text to the left
-    paddingHorizontal: 0, // Add padding to match the header
+    textAlign: 'left',
+    paddingHorizontal: 0,
   },
   infoItem: {
     marginBottom: 10,
@@ -219,7 +237,7 @@ const styles = StyleSheet.create({
   },
   extraImage: {
     width: 100,
-    height: 100,
+    height: 100, // Adjusted to be more rectangular
     borderRadius: 10,
   },
   bookmarkIcon: {
