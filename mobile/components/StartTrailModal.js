@@ -2,15 +2,16 @@ import React, { useState, useEffect, useContext, useRef} from 'react';
 import { View, Button, Alert, StyleSheet, Text, ActivityIndicator, Modal, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker, Polyline, AnimatedRegion, Animated } from 'react-native-maps';
-import * as FileSystem from 'expo-file-system'; // Import Expo FileSystem
+import * as FileSystem from 'expo-file-system'; 
 import * as ImagePicker from 'expo-image-picker';
 import { uploadTrailPic } from '../service/fileService';
-import { createTrail } from '../service/trailService'; // Import createTrail function
+import { createTrail } from '../service/trailService'; 
 import { AuthContext } from '../context/AuthContext';
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
 import { smoothCoordinates, calculateDistance } from '../utils/locationUtil';
-import CustomMarker from '../components/CustomMarker'; // Import CustomMarker
+import CustomMarker from '../components/CustomMarker'; 
+import SubmitTrailModal from '../components/SubmitTrailModal'; 
 
 const StartTrailModal = () => {
   const mapRef = useRef(null); // Create a ref for MapView
@@ -191,6 +192,7 @@ const StartTrailModal = () => {
     setTrailStartLocation(null);
     setElapsedTime(0); 
     setDistanceTraveled(0);
+    
 
     // Clear the timer
     clearInterval(intervalId);
@@ -206,6 +208,25 @@ const StartTrailModal = () => {
       state: startState,
       route: routeCoordinates,
     });
+    
+  };
+  
+  const handleDiscard = () => {
+    setModalVisible(false);
+    setFormData({
+      name: '',
+      city: '',
+      state: '',
+      rating: 0,
+      difficulty: '',
+      length: 0,
+      time: 0,
+      images: [],
+      description: '',
+    });
+    setPrimaryImage('');
+    setImages([]);
+    setRouteCoordinates([]);
   };
 
   /**
@@ -240,7 +261,20 @@ const StartTrailModal = () => {
       console.error('Create trail error:', error.message);
       Alert.alert('Trail could not be created', error.message);
     }
-
+    setRouteCoordinates([]);
+    setFormData({
+      name: '',
+      city: '',
+      state: '',
+      rating: 0,
+      difficulty: '',
+      length: 0,
+      time: 0,
+      images: [],
+      description: '',
+    });
+    setPrimaryImage('');
+    setImages([]);
     setModalVisible(false); 
   };
 
@@ -250,40 +284,44 @@ const StartTrailModal = () => {
   };
 
   //IMAGE STUFF
-  const pickImages = async () => {
+  const pickImages = async (indexToReplace = null) => {
     console.log('Pick image button pressed');
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
       allowsEditing: true,
       aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
       quality: 1,
     });
-
+  
     console.log('Image picker result:', result);
-
+  
     if (!result.canceled) {
-      const uploadedImages = images.slice(); //clearing the array
-      //uploading each image individually
-      // const downloadURL = await uploadTrailPic(result.assets[0].uri);
-      for (let image of result.assets || []) {
-        // console.log("START TRAIL: " + image.uri);
-        const downloadURL = await uploadTrailPic(image.uri);
-        console.log('StartTrailModal' + downloadURL);
-        uploadedImages.push(downloadURL); //adding the url to the array
+      // Assume `uploadTrailPic` uploads the image and returns its URL
+      const downloadURL = await uploadTrailPic(result.assets[0].uri);
+  
+      // Update the image array
+      const updatedImages = [...formData.images];
+  
+      if (indexToReplace !== null) {
+        // Replace the image at the specified index
+        updatedImages[indexToReplace] = downloadURL;
+      } else {
+        // Add a new image to the array
+        updatedImages.push(downloadURL);
       }
-      setImages(uploadedImages); //updating the state with the array of urls
-      setFormData({ ...formData, images: uploadedImages });
+  
+      // Update the state with the modified image array
+      setFormData({ ...formData, images: updatedImages });
     } else {
       console.log('Image picking canceled');
     }
   };
+  
 
   const pickPrimaryImage = async () => {
     console.log('Pick image button pressed');
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
       allowsEditing: true,
       aspect: [1, 1], // Set aspect ratio to 1:1 for a square crop
       quality: 1,
@@ -313,6 +351,7 @@ const StartTrailModal = () => {
                 latitudeDelta: 0.007,
                 longitudeDelta: 0.007,
               }}
+              mapType="satellite"
             >
               
           <Marker.Animated
@@ -349,82 +388,20 @@ const StartTrailModal = () => {
         </>
       )}
 
-      <Modal
+      <SubmitTrailModal
         visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Trail Details</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter the city where you hiked"
-              value={formData.city}
-              onChangeText={(text) => handleInputChange('city', text)}
-              placeholderTextColor="#A9A9A9"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter the state where you hiked"
-              value={formData.state}
-              onChangeText={(text) => handleInputChange('state', text)}
-              placeholderTextColor="#A9A9A9"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter the trail name"
-              value={formData.name}
-              onChangeText={(text) => handleInputChange('name', text)}
-              placeholderTextColor="#A9A9A9"
-            />
-            <Text style={styles.label}>Rating: {formData.rating.toFixed(1)}</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={5}
-              step={0.1}
-              value={formData.rating}
-              onValueChange={(value) => handleInputChange('rating', Math.round(value * 10) / 10)}
-              minimumTrackTintColor="#1EB1FC"
-              maximumTrackTintColor="#d3d3d3"
-              thumbTintColor="#1EB1FC"
-            />
-            <Picker
-              selectedValue={formData.difficulty}
-              style={styles.picker}
-              onValueChange={(itemValue) => handleInputChange('difficulty', itemValue)}
-            >
-              <Picker.Item label="Select Difficulty" value="" />
-              <Picker.Item label="Very Easy" value="Very Easy" />
-              <Picker.Item label="Easy" value="Easy" />
-              <Picker.Item label="Moderate" value="Moderate" />
-              <Picker.Item label="Hard" value="Hard" />
-              <Picker.Item label="Very Hard" value="Very Hard" />
-              <Picker.Item label="Extreme" value="Extreme" />
-            </Picker>
-
-            <Button title="Upload Primary Image" onPress={pickPrimaryImage} />
-            <Button title="Upload Images" onPress={pickImages} />
-            <Text style={styles.uploadedImagesTitle}>Uploaded Primary Image:</Text>
-            <Image source={{ uri: primaryImage }} style={styles.uploadedImage} />
-            <Text style={styles.uploadedImagesTitle}>Uploaded Images:</Text>
-            {images.length > 0 && (
-              <View style={styles.uploadedImagesContainer}>
-                <ScrollView horizontal>
-                {images.map((image, index) => {
-                  return <Image key={index} source={{ uri: image }} style={styles.uploadedImage} />;
-                })}
-                </ScrollView>
-              </View>
-            )}
-            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setModalVisible(false)}
+        onSave={handleSubmit}
+        onDiscard={handleDiscard}
+        formData={formData}
+        handleInputChange={handleInputChange}
+        pickPrimaryImage={pickPrimaryImage}
+        pickImages={pickImages}
+        primaryImage={primaryImage}
+        images={images}
+        routeCoordinates={routeCoordinates}
+        mapRef={mapRef}
+      />
     </View>
   );
 };

@@ -5,6 +5,7 @@ import TrailDetailModal from './TrailDetailModal';
 import { fetchTrails, fetchTrailsByFollowingUsers } from '../service/trailService';
 import { AuthContext } from '../context/AuthContext';
 import { formatDate, formatTime } from '../utils/formattingUtil';
+import UserProfileModal from './UserProfileModal';
 
 // Default Images
 const defaultImage = require('../assets/icon.png');
@@ -12,6 +13,8 @@ const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
 export default function CommunityScreen({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
+  const [userProfileModalVisible, setUserProfileModalVisible] = useState(false); 
+  const [selectedUserId, setSelectedUserId] = useState(null); // for the profile modal
   const [selectedTrail, setSelectedTrail] = useState(null);
   const [activeTab, setActiveTab] = useState('Local');
   const [trails, setTrails] = useState([]);
@@ -29,7 +32,7 @@ export default function CommunityScreen({ navigation }) {
   const loadTrails = async () => {
     try {
       const fetchedTrails = await fetchTrails();
-      setTrails(fetchedTrails);
+      setTrails(sortByDate(fetchedTrails));
     } catch (error) {
       console.error('Error fetching trails:', error);
     } finally {
@@ -40,13 +43,18 @@ export default function CommunityScreen({ navigation }) {
   const loadTrailsForFollowingPage = async () => {
     try {
       const fetchedTrails = await fetchTrailsByFollowingUsers(user.id);
-      setTrailsForFollowingPage(fetchedTrails);
+      setTrailsForFollowingPage(sortByDate(fetchedTrails));
     } catch (error) {
       console.error('Error fetching trails:', error);
     } finally {
       setLoading(false);
     }
   }
+
+  const sortByDate = (trails) => {
+    return trails.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }
+
 
 
   const openModal = (trail) => {
@@ -57,6 +65,16 @@ export default function CommunityScreen({ navigation }) {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedTrail(null);
+  };
+
+  const openUserProfileModal = (userId) => {
+    setSelectedUserId(userId);
+    setUserProfileModalVisible(true);
+  };
+
+  const closeUserProfileModal = () => {
+    setUserProfileModalVisible(false);
+    setSelectedUserId(null);
   };
 
   const filteredTrails = activeTab === 'Following' ? trailsForFollowingPage : trails.filter((trail) => {
@@ -107,10 +125,9 @@ export default function CommunityScreen({ navigation }) {
         filteredTrails.map((trail) => (
           <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
             <View style={styles.trailHeader}>
-              <TouchableOpacity> 
-                 {/* TODO: Implement separate profile screen to view other peoples profiles, this would navigate over to that on press */}
-                <Image source={{ uri: trail.owner.profilePicture}} style={styles.profilePicture} /> 
-              </TouchableOpacity>
+                <TouchableOpacity onPress={() => openUserProfileModal(trail.owner.id)}> 
+                  <Image source={{ uri: trail.owner.profilePicture || defaultProfilePic }} style={styles.profilePicture} /> 
+                </TouchableOpacity>
               <View style={styles.trailHeaderText}>
                 <Text style={styles.userName}>{trail.owner.username}</Text>
                 <Text style={styles.date}>{formatDate(trail.date)}</Text>
@@ -131,6 +148,11 @@ export default function CommunityScreen({ navigation }) {
       </ScrollView>
 
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
+      <UserProfileModal
+        visible={userProfileModalVisible}
+        onClose={closeUserProfileModal}
+        userId={selectedUserId}
+      />
     </View>
   );
 }

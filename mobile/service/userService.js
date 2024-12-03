@@ -100,4 +100,23 @@ export async function getFollowerIds(userId) {
     } catch (error) {
         throw error;
     }
+
+    
+}
+
+export async function fetchUserById(id) {
+    try {
+        const response = await fetch(`${BASE_URL}/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
 }

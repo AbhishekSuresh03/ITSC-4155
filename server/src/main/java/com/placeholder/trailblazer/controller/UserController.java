@@ -136,4 +136,25 @@ public class UserController {
         List<String> followerUserIds = userService.getFollowerUserIds(userId);
         return ResponseEntity.ok(followerUserIds);
     }
+
+    @CrossOrigin
+    @PostMapping("/{userId}/save/{trailId}")
+    public ResponseEntity<User> saveTrail(@PathVariable String userId, @PathVariable String trailId) {
+        User updatedUser = userService.saveTrail(userId, trailId);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
+    @CrossOrigin
+    @PostMapping("/{userId}/unsave/{trailId}")
+    public ResponseEntity<User> unsaveTrail(@PathVariable String userId, @PathVariable String trailId) {
+        User updatedUser = userService.unsaveTrail(userId, trailId);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
+    @CrossOrigin
+    @GetMapping("/{userId}/saved-trails")
+    public ResponseEntity<List<String>> getSavedTrails(@PathVariable String userId) {
+        List<String> savedTrails = userService.getSavedTrails(userId);
+        return new ResponseEntity<>(savedTrails, HttpStatus.OK);
+    }
 }

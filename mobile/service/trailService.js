@@ -49,7 +49,7 @@ export async function fetchTrailsByUserId(userId) {
             },
         });
         const responseText = await response.text();
-        console.log('API Response:', responseText); // Log the raw response text
+        // console.log('API Response:', responseText); // Log the raw response text
         if (!response.ok) {
             throw new Error(responseText);
         }
@@ -87,7 +87,7 @@ export async function fetchTrailsByFollowingUsers(userId) {
             },
         });
         const responseText = await response.text();
-        console.log('API Response:', responseText); // Log the raw response text
+        // console.log('API Response:', responseText); // Log the raw response text
         if (!response.ok) {
             throw new Error(responseText);
         }
