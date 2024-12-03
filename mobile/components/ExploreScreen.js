@@ -9,12 +9,12 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState(users);
-  const { user } = useContext(AuthContext); 
+  const { user } = useContext(AuthContext);
   const [followingIds, setFollowingIds] = useState([]);
-  const [refreshing, setRefreshing] = useState(false); 
+  const [refreshing, setRefreshing] = useState(false);
 
 
-  //get all users from the backend
+  // Fetch all users from the backend
   useEffect(() => {
     fetchUsers();
     fetchFollowingIds();
@@ -24,7 +24,7 @@ export default function ExploreScreen() {
       const usersData = await getAllUsers();
       const filteredUsersData = usersData.filter(u => u.id !== user.id); // Remove currently logged-in user
       setUsers(filteredUsersData);
-      setFilteredUsers(filteredUsersData); 
+      setFilteredUsers(filteredUsersData);
     } catch (error) {
       setUsers({});
       console.error('Failed to fetch users:', error);
@@ -39,29 +39,38 @@ export default function ExploreScreen() {
     }
   };
   const handleSearch = (text) => {
-    setSearch(text);
-    const filtered = users.filter(user =>
-      user.username.toLowerCase().includes(text.toLowerCase())
+    const sanitizedText = sanitizeSearchQuery(text);
+    setSearch(sanitizedText);
+
+    // Filter users
+    const filteredUserList = users.filter((user) =>
+      user.username.toLowerCase().includes(sanitizedText.toLowerCase())
     );
-    setFilteredUsers(filtered);
+    setFilteredUsers(filteredUserList);
+
+    // Filter trails
+    const filteredTrailList = trails.filter((trail) =>
+      trail.name.toLowerCase().includes(sanitizedText.toLowerCase())
+    );
+    setFilteredTrails(filteredTrailList);
   };
 
   const handleFollow = async (userIdToFollow) => {
-    try{
-      const response= await followUser(user.id, userIdToFollow);
+    try {
+      const response = await followUser(user.id, userIdToFollow);
       setFollowingIds([...followingIds, userIdToFollow]); //adding to followingids array to signift follow was successful
     }
-    catch (error){
+    catch (error) {
       console.error('Error following user:', error.message);
     }
   };
 
   const handleUnfollow = async (userIdToUnfollow) => {
-    try{
-      const response= await unfollowUser(user.id, userIdToUnfollow);
+    try {
+      const response = await unfollowUser(user.id, userIdToUnfollow);
       setFollowingIds(followingIds.filter(id => id !== userIdToUnfollow)); //remove on unfollow. wont happen if unfollowUser wasnt successful since its in a trycatch
     }
-    catch (error){
+    catch (error) {
       console.error('Error following user:', error.message);
     }
   };
@@ -78,7 +87,7 @@ export default function ExploreScreen() {
     <View style={styles.container}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search by username"
+        placeholder="Search by username or trail"
         value={search}
         onChangeText={handleSearch}
       />
@@ -95,9 +104,9 @@ export default function ExploreScreen() {
               <Text style={styles.location}>{user.city}, {user.state}</Text>
             </View>
             {followingIds.includes(user.id) ? (
-            <Button title="Unfollow" onPress={() => handleUnfollow(user.id)} />
+              <Button title="Unfollow" onPress={() => handleUnfollow(user.id)} />
             ) : (
-            <Button title="Follow" onPress={() => handleFollow(user.id)} />
+              <Button title="Follow" onPress={() => handleFollow(user.id)} />
             )}
           </View>
         ))}
@@ -122,6 +131,11 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     flexGrow: 1,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginVertical: 10,
   },
   userContainer: {
     flexDirection: 'row',
@@ -156,7 +170,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10
   },
-  followButtonText:{
+  followButtonText: {
     color: 'white',
     fontWeight: 'bold',
   },

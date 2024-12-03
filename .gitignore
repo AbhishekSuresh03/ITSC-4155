@@ -34,7 +34,12 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-
 .vscode/settings.json
 server/.env
+node_modules
+
+# Ignore all .env files in the project
+.env
+*.env
 mobile/.env
+server/.env

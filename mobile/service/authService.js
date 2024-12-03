@@ -39,8 +39,6 @@ export async function loginUser(username, password){
 
 export async function createUser(formData){
     try{
-        // console.log(formData);
-        // console.log(BASE_URL);
         const response = await fetch(`${BASE_URL}`, {
             method: 'POST',
             headers: {

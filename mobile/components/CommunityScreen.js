@@ -19,7 +19,7 @@ export default function CommunityScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const { user } = useContext(AuthContext); // Access user from AuthContext
   const [refreshing, setRefreshing] = useState(false);
-  
+
 
   useEffect(() => {
     loadTrails();
@@ -63,7 +63,7 @@ export default function CommunityScreen({ navigation }) {
     if (activeTab === 'Local') {
       return user && (trail.city === user.city || trail.state === user.state);
     }
-    return true;
+    return matchesSearch;
   });
 
   if (loading) {
@@ -76,7 +76,7 @@ export default function CommunityScreen({ navigation }) {
   const onRefresh = async () => {
     setRefreshing(true);
     await loadTrails();
-    
+
     await loadTrailsForFollowingPage();
     console.log("test");
     setRefreshing(false);
@@ -84,6 +84,7 @@ export default function CommunityScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Navbar for switching between Local and Following */}
       <View style={styles.navbar}>
         <TouchableOpacity style={styles.navButton} onPress={() => setActiveTab('Local')}>
           <Text style={[styles.navButtonText, activeTab === 'Local' && styles.activeNavButtonText]}>Local</Text>
@@ -104,32 +105,33 @@ export default function CommunityScreen({ navigation }) {
             <Text style={styles.emptyText}>No trails to display. Pull down to refresh or try a different tab.</Text>
           </View>
         ) : (
-        filteredTrails.map((trail) => (
-          <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
-            <View style={styles.trailHeader}>
-              <TouchableOpacity> 
-                 {/* TODO: Implement separate profile screen to view other peoples profiles, this would navigate over to that on press */}
-                <Image source={{ uri: trail.owner.profilePicture}} style={styles.profilePicture} /> 
-              </TouchableOpacity>
-              <View style={styles.trailHeaderText}>
-                <Text style={styles.userName}>{trail.owner.username}</Text>
-                <Text style={styles.date}>{formatDate(trail.date)}</Text>
+          filteredTrails.map((trail) => (
+            <TouchableOpacity key={trail.id} style={styles.trailContainer} onPress={() => openModal(trail)}>
+              <View style={styles.trailHeader}>
+                <TouchableOpacity>
+                  {/* TODO: Implement separate profile screen to view other peoples profiles, this would navigate over to that on press */}
+                  <Image source={{ uri: trail.owner.profilePicture }} style={styles.profilePicture} />
+                </TouchableOpacity>
+                <View style={styles.trailHeaderText}>
+                  <Text style={styles.userName}>{trail.owner.username}</Text>
+                  <Text style={styles.date}>{formatDate(trail.date)}</Text>
+                </View>
               </View>
-            </View>
-            <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
-            <Text style={styles.trailName}>{trail.name}</Text>
-            <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
-            <Text style={styles.trailDetails}>
-              <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length.toFixed(2) } Miles | {formatTime(trail.time)}
-            </Text>
-            <Text style={styles.trailDescription}>
-              {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
-            </Text>
-          </TouchableOpacity>
-         ))
+              <Image source={trail.image || defaultImage} style={styles.trailImage} />
+              <Text style={styles.trailName}>{trail.name}</Text>
+              <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
+              <Text style={styles.trailDetails}>
+                <Icon name="star" type="font-awesome" color="#f50" size={12} /> {trail.rating} | {trail.difficulty} | {trail.length.toFixed(2)} Miles | {formatTime(trail.time)}
+              </Text>
+              <Text style={styles.trailDescription}>
+                {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
+              </Text>
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
 
+      {/* Trail detail modal */}
       <TrailDetailModal visible={modalVisible} onClose={closeModal} trail={selectedTrail} />
     </View>
   );
@@ -143,8 +145,6 @@ const styles = StyleSheet.create({
   navbar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginHorizontal: -10,
-    marginVertical: 5,
     marginBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e1e1e1',
@@ -162,18 +162,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#FFC107',
   },
+  searchBarContainer: {
+    backgroundColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderTopColor: 'transparent',
+    marginVertical: 10,
+  },
+  searchBarInput: {
+    backgroundColor: '#e1e1e1',
+  },
   scrollViewContent: {
     flexGrow: 1,
   },
   scrollView: {
-    margin: -12,
+    marginHorizontal: -10,
   },
   trailContainer: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 10,
     marginVertical: 10,
-    marginHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
