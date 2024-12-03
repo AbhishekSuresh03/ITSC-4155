@@ -262,6 +262,19 @@ const StartTrailModal = () => {
       Alert.alert('Trail could not be created', error.message);
     }
     setRouteCoordinates([]);
+    setFormData({
+      name: '',
+      city: '',
+      state: '',
+      rating: 0,
+      difficulty: '',
+      length: 0,
+      time: 0,
+      images: [],
+      description: '',
+    });
+    setPrimaryImage('');
+    setImages([]);
     setModalVisible(false); 
   };
 

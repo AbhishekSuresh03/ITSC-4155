@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Modal, Button } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image, Modal, Button, Icon } from 'react-native';
 import Slider from '@react-native-community/slider';
 import MapView, { Polyline } from 'react-native-maps';
 

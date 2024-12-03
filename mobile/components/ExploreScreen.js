@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Button, RefreshControl } from 'react-native';
 import { getAllUsers, followUser, unfollowUser, getFollowingIds } from '../service/userService';
 import { AuthContext } from '../context/AuthContext';
+import UserProfileModal from './UserProfileModal'; // Import the new modal
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
 
@@ -12,6 +13,8 @@ export default function ExploreScreen() {
   const { user } = useContext(AuthContext); 
   const [followingIds, setFollowingIds] = useState([]);
   const [refreshing, setRefreshing] = useState(false); 
+  const [selectedUserId, setSelectedUserId] = useState(null); // State to manage selected user ID
+  const [userProfileModalVisible, setUserProfileModalVisible] = useState(false);
 
 
   //get all users from the backend
@@ -73,6 +76,18 @@ export default function ExploreScreen() {
     setRefreshing(false);
   };
 
+  const openUserProfileModal = (userId) => {
+    setSelectedUserId(userId);
+    setUserProfileModalVisible(true);
+    fetchFollowingIds(); // Refresh following IDs when opening modal
+  };
+
+  const closeUserProfileModal = () => {
+    setUserProfileModalVisible(false);
+    setSelectedUserId(null);
+    fetchFollowingIds(); // Refresh following IDs after closing modal
+  };
+
   console.log('People the current user is following: ' + followingIds)
   return (
     <View style={styles.container}>
@@ -88,20 +103,27 @@ export default function ExploreScreen() {
       >
         {filteredUsers.map(user => (
           <View key={user.id} style={styles.userContainer}>
-            <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
+            <TouchableOpacity onPress={() => openUserProfileModal(user.id)}>
+              <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
+            </TouchableOpacity>
             <View style={styles.userInfo}>
               <Text style={styles.username}>{user.username}</Text>
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
             </View>
             {followingIds.includes(user.id) ? (
-            <Button title="Unfollow" onPress={() => handleUnfollow(user.id)} />
+              <Button title="Unfollow" onPress={() => handleUnfollow(user.id)} />
             ) : (
-            <Button title="Follow" onPress={() => handleFollow(user.id)} />
+              <Button title="Follow" onPress={() => handleFollow(user.id)} />
             )}
           </View>
         ))}
       </ScrollView>
+      <UserProfileModal
+        visible={userProfileModalVisible}
+        onClose={closeUserProfileModal}
+        userId={selectedUserId}
+      />
     </View>
   );
 }
