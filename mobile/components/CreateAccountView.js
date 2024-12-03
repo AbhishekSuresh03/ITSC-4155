@@ -1,18 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import * as Progress from 'react-native-progress';
 import * as ImagePicker from 'expo-image-picker';
-import { createUser } from '../service/authService'; // Import the createUser function
+import { createUser, loginUser } from '../service/authService'; // Import the createUser function
 import { uploadProfilePic } from '../service/fileService';
-import {
-  sanitizeInput,
-  validateUsername,
-  validateEmail,
-  validatePassword,
-  validateName
-} from '../utils/sanitize.js';
+import { AuthContext } from '../context/AuthContext';
 
+
+/**
+ * CreateAccountView component handles the user account creation process.
+ * 
+ * This component manages a multi-step form for creating a new user account. It includes input fields for user details,
+ * navigation between steps, and submission of the form data. The component also allows the user to pick a profile picture
+ * from their device's image library.
+ * 
+ * @component
+ * @param {Object} props - The component props.
+ * @param {Object} props.navigation - The navigation object provided by React Navigation.
+ * 
+ * @returns {JSX.Element} The rendered component.
+ */
 export default function CreateAccountView({ navigation }) {
+  const { login } = useContext(AuthContext);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     username: '',
@@ -46,39 +55,13 @@ export default function CreateAccountView({ navigation }) {
   };
 
   const handleSubmit = async () => {
-    const { username, firstName, lastName, email, password } = formData;
-
-    // Validate inputs
-    if (!username || !firstName || !lastName || !email || !password) {
-      Alert.alert('Error', 'All fields are required.');
-      return;
-    }
-
-    if (!validateUsername(username)) {
-      Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
-      return;
-    }
-
-    if (!validateName(firstName) || !validateName(lastName)) {
-      Alert.alert('Invalid Name', 'Names should only contain letters, spaces, and hyphens.');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address.');
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      Alert.alert(
-        'Invalid Password',
-        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
-      );
-      return;
-    }
-
     try {
-      const userData = await createUser(formData);
+      console.log("test");
+      const userData = await createUser(formData);            //this maeks a user 
+      console.log("CREATE USER RESPONSE: " + JSON.stringify(userData, null, 2));
+      const loginData = await loginUser(formData.username, formData.password); //this logs in the user | this is a lazy fix for that bug
+      console.log("LOGIN RESPONSE: " + JSON.stringify(loginData, null, 2));
+      login(loginData); // saving user data in context and AsyncStorage
       navigation.navigate('Main');
       console.log(userData);
     } catch (error) {

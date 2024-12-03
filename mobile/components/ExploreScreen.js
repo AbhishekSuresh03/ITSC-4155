@@ -1,55 +1,43 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput } from 'react-native';
-import { getAllUsers } from '../service/userService';
-import { sanitizeSearchQuery } from '../utils/sanitize';
-const defaultImage = require('../assets/icon.png');
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, Button, RefreshControl } from 'react-native';
+import { getAllUsers, followUser, unfollowUser, getFollowingIds } from '../service/userService';
+import { AuthContext } from '../context/AuthContext';
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
+
 
 export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [users, setUsers] = useState([]);
-  const [trails] = useState([
-    {
-      id: 1,
-      name: 'River Loop',
-      city: 'Charlotte',
-      state: 'North Carolina',
-      rating: 4.5,
-      difficulty: 'Moderate',
-      length: '5 miles',
-      time: '2 hours',
-      image: defaultImage,
-    },
-    {
-      id: 2,
-      name: 'Trail Name 2',
-      city: 'City 2',
-      state: 'State 2',
-      rating: 4.0,
-      difficulty: 'Easy',
-      length: '3 miles',
-      time: '1.5 hours',
-      image: null,
-    },
-  ]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-  const [filteredTrails, setFilteredTrails] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState(users);
+  const { user } = useContext(AuthContext);
+  const [followingIds, setFollowingIds] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
 
   // Fetch all users from the backend
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersData = await getAllUsers();
-        setUsers(usersData);
-        setFilteredUsers(usersData);
-      } catch (error) {
-        console.error('Failed to fetch users:', error);
-      }
-    };
-
     fetchUsers();
+    fetchFollowingIds();
   }, []);
-
+  const fetchUsers = async () => {
+    try {
+      const usersData = await getAllUsers();
+      const filteredUsersData = usersData.filter(u => u.id !== user.id); // Remove currently logged-in user
+      setUsers(filteredUsersData);
+      setFilteredUsers(filteredUsersData);
+    } catch (error) {
+      setUsers({});
+      console.error('Failed to fetch users:', error);
+    }
+  };
+  const fetchFollowingIds = async () => {
+    try {
+      const ids = await getFollowingIds(user.id);
+      setFollowingIds(ids);
+    } catch (error) {
+      console.error('Error fetching following IDs:', error.message);
+    }
+  };
   const handleSearch = (text) => {
     const sanitizedText = sanitizeSearchQuery(text);
     setSearch(sanitizedText);
@@ -67,6 +55,34 @@ export default function ExploreScreen() {
     setFilteredTrails(filteredTrailList);
   };
 
+  const handleFollow = async (userIdToFollow) => {
+    try {
+      const response = await followUser(user.id, userIdToFollow);
+      setFollowingIds([...followingIds, userIdToFollow]); //adding to followingids array to signift follow was successful
+    }
+    catch (error) {
+      console.error('Error following user:', error.message);
+    }
+  };
+
+  const handleUnfollow = async (userIdToUnfollow) => {
+    try {
+      const response = await unfollowUser(user.id, userIdToUnfollow);
+      setFollowingIds(followingIds.filter(id => id !== userIdToUnfollow)); //remove on unfollow. wont happen if unfollowUser wasnt successful since its in a trycatch
+    }
+    catch (error) {
+      console.error('Error following user:', error.message);
+    }
+  };
+
+  const onRefresh = async () => { // Added this function
+    setRefreshing(true);
+    await fetchUsers();
+    await fetchFollowingIds();
+    setRefreshing(false);
+  };
+
+  console.log('People the current user is following: ' + followingIds)
   return (
     <View style={styles.container}>
       <TextInput
@@ -75,9 +91,11 @@ export default function ExploreScreen() {
         value={search}
         onChangeText={handleSearch}
       />
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <Text style={styles.sectionHeader}>Users</Text>
-        {filteredUsers.map((user) => (
+      <ScrollView
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {filteredUsers.map(user => (
           <View key={user.id} style={styles.userContainer}>
             <Image source={{ uri: user.profilePicture || defaultProfilePic }} style={styles.profilePicture} />
             <View style={styles.userInfo}>
@@ -85,19 +103,11 @@ export default function ExploreScreen() {
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
             </View>
-          </View>
-        ))}
-        <Text style={styles.sectionHeader}>Trails</Text>
-        {filteredTrails.map((trail) => (
-          <View key={trail.id} style={styles.trailContainer}>
-            <Image source={trail.image || defaultImage} style={styles.trailImage} />
-            <Text style={styles.trailName}>{trail.name}</Text>
-            <Text style={styles.trailLocation}>
-              {trail.city}, {trail.state}
-            </Text>
-            <Text style={styles.trailDetails}>
-              {trail.rating} stars | {trail.difficulty} | {trail.length} | {trail.time}
-            </Text>
+            {followingIds.includes(user.id) ? (
+              <Button title="Unfollow" onPress={() => handleUnfollow(user.id)} />
+            ) : (
+              <Button title="Follow" onPress={() => handleFollow(user.id)} />
+            )}
           </View>
         ))}
       </ScrollView>
@@ -155,29 +165,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'gray',
   },
-  trailContainer: {
-    marginVertical: 10,
+  followButton: {
+    backgroundColor: '#0095F6',
     padding: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
-    elevation: 2,
+    borderRadius: 10
   },
-  trailImage: {
-    width: '100%',
-    height: 150,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  trailName: {
-    fontSize: 16,
+  followButtonText: {
+    color: 'white',
     fontWeight: 'bold',
   },
-  trailLocation: {
-    fontSize: 14,
-    color: 'gray',
+  followingButton: {
+    backgroundColor: '#fff',
+    borderColor: '#0095F6',
+    borderWidth: 1,
   },
-  trailDetails: {
-    fontSize: 12,
-    color: 'gray',
+  followingButtonText: {
+    color: '#0095F6',
   },
 });

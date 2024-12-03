@@ -22,4 +22,6 @@ public class User {
     private String state;
     private String profilePicture;
     private List<String> trails;
+    private List<String> following;
+    private List<String> followers;
 }

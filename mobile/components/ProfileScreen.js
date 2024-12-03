@@ -1,127 +1,230 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
+import { fetchTrailsByUserId } from '../service/trailService';
 
-export default function ProfileScreen(){
+
+export default function ProfileScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('Feed');
   const { user, logout } = useContext(AuthContext); // Access user and logout from AuthContext
-  
+  const [trails, setTrails] = useState([]);
+  const [totalMiles, setTotalMiles] = useState(0);
+  const [trailPictures, setTrailPictures] = useState([]);
+
+
+
+  // -=-=-=-=-==-==-=-=--=-=-=-THIS IS A TEST
+  useEffect(() => { 
+    const loadTrails = async () => {
+      try {
+
+        const fetchedTrails = await fetchTrailsByUserId(user.id);
+        console.log('Fetched Trails:', fetchedTrails); // Verify data
+        setTrails(fetchedTrails);
+        const pictures = getTrailPictures(trails);
+        setTrailPictures(pictures);
+        const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0).toFixed(2); // dont even ask how this works, it just does.
+        setTotalMiles(miles);
+      } catch (error) {
+        console.error('Error fetching trails:', error);
+      }
+    };
+    loadTrails();
+  }, [navigation]);
+
+  function getTrailPictures(trails) {
+    const trailPictures = [];
+    trails.forEach(trail => {
+      if (trail.primaryImage) {
+        trailPictures.push(trail.primaryImage);
+      }
+      if (trail.images && Array.isArray(trail.images)) {
+        trailPictures.push(...trail.images);
+      }
+    });
+    return trailPictures;
+  }
   const handleLogout = async () => {
-    await logout();
-    navigation.navigate('Main'); // mavigate to Login screen after logout
+    try {
+      await logout();
+       // Navigate to the Opening screen after logout
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   const renderContent = () => {
-      switch (activeTab) {
-          case 'Feed':
-              return( 
-              <View style={styles.contentContainer}>
-                  <Text style={styles.contentText}>Nothing from feed to currently display!</Text>
-                  <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
-              </View>
-              );
-          case 'Photos':
-              return (
+    console.log(trails);
+    switch (activeTab) {
+      case 'Feed':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>Nothing from feed to currently display!</Text>
+            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+          </View>
+        );
+      case 'Photos':
+        return (
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            {trailPictures.length === 0 ? (
               <View style={styles.contentContainer}>
                 <Text style={styles.contentText}>No photos to currently display!</Text>
-                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+                <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
               </View>
-              );
-          case 'Reviews':
-              return (
-              <View style={styles.contentContainer}>
-                <Text style={styles.contentText}>No reviews to currently display!</Text>
-                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+            ) : (
+              <View style={styles.imageGrid}>
+                {trailPictures.map((picture, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{ uri: picture }} style={styles.image} />
+                  </View>
+                ))}
               </View>
-              );
-          case 'Activities':
-              return (
+            )}
+          </ScrollView>
+        );
+      case 'Reviews':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>No reviews to currently display!</Text>
+            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
+          </View>
+        );
+      case 'Activities':
+        return (
+          <ScrollView contentContainerStyle={styles.scrollViewContent}>
+            {trails.length === 0 ? (
               <View style={styles.contentContainer}>
                 <Text style={styles.contentText}>No activities to display!</Text>
-                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
+                <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
               </View>
-              );
-          case 'Completed':
-              return (
-              <View style={styles.contentContainer}>
-                <Text style={styles.contentText}>No completed trails to display!</Text>
-                <Image source={require('../assets/emptyProfileNav.png')}style={styles.emptyPicture}/>
-              </View>
-              );
-              default:
-                return null;
-      }
-  };
-  //ensuring user is logged in
-
-  if (!user) {
-    return (
-        //TODO: Update this to reference the login screen
-        // could merge the login screen with the profile screen to make it easier to navigate
-        //or just delete this if we show the login screen before the user can access the rest of the app
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={styles.message}>You are not logged in.</Text>
-        </View>
-    );
-}
-
-  return(
-    <ScrollView style={styles.container}>
-          <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
-          <View style={styles.nameContainer}>
-            <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
-            <Text style={styles.location}>{user.city}, {user.state}</Text>
-          </View>
-          
-          
-
-          <View style={styles.yearStatsContainer}>
-            <Text style={styles.yearStatText}>2024 Stats</Text>
-
-            <View style={styles.dataYearStatContainer}>
-              <View style={styles.actContainer}>
-                <Text style={styles.actNum}>{/*user.activities.length*/5}</Text>
-                <Text style={styles.act}>Activities</Text>
-              </View>
-              <View style={styles.mileContainer}>
-                <Text style={styles.mileNum}>{user.miles}</Text>
-                <Text style={styles.mile}>Miles</Text>
-              </View>
-            </View>
-          </View>
-
-          <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
-            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
-              <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
-              <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
-              <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
-              <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
-            </TouchableOpacity>    
-            <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
-              <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
-            </TouchableOpacity>
+            ) : (
+              trails.map((trail) => (
+                <View key={trail.id} style={styles.card}>
+                  <Image source={{ uri: trail.primaryImage }} style={styles.cardImage} />
+                  <View style={styles.cardContent}>
+                    <Text style={styles.cardTitle}>{trail.name}</Text>
+                    <Text style={styles.cardLocation}>{trail.city}, {trail.state}</Text>
+                    <Text style={styles.cardDetails}>{trail.difficulty} | {trail.length} | {trail.time}</Text>
+                    <Text style={styles.cardDescription}>
+                      {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
+                    </Text>
+                  </View>
+                </View>
+              ))
+            )}
           </ScrollView>
-        
-          <View style={styles.bottomHalf}>
-              {renderContent()}
+        );
+      case 'Completed':
+        return (
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentText}>No completed trails to display!</Text>
+            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
           </View>
+        );
+      default:
+        return null;
+    }
+  };
+
+
+  if(!user){
+    navigation.navigate('OpeningScreen')
+    return(
+      <Text>Not logged in</Text>
+    )
+  }
+  
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+          <Image source={{ uri: user.profilePicture }} style={styles.profilePicture} />
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Text style={styles.logoutButtonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      <View style={styles.nameContainer}>
+        <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+        <Text style={styles.location}>{user.city}, {user.state}</Text>
+      </View>
+
+      
+      <View style={styles.followContainer}>
+        <View style={styles.followers}>
+          <Text style={styles.followerNum}>{user.followers.length}</Text>
+          <Text style={styles.followerText}>followers</Text>
+        </View>
+        <View style={styles.following}>
+          <Text style={styles.followingNum}>{user.following.length}</Text>
+          <Text style={styles.followingText}>following</Text>
+        </View>
+      </View>
+
+      <View style={styles.yearStatsContainer}>
+        <Text style={styles.yearStatText}>2024 Stats</Text>
+        <View style={styles.dataYearStatContainer}>
+          <View style={styles.actContainer}>
+            <Text style={styles.actNum}>{trails.length}</Text>
+            <Text style={styles.act}>Trails</Text>
+          </View>
+          <View style={styles.mileContainer}>
+            <Text style={styles.mileNum}>{totalMiles}</Text>
+            <Text style={styles.mile}>Miles</Text>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
+        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
+          <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
+          <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
+          <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
+          <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
+          <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
+        </TouchableOpacity>
       </ScrollView>
-    );
+
+      <View style={styles.bottomHalf}>
+        {renderContent()}
+      </View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
+},
+  logoutButton: {
+    backgroundColor: '#ff0000',
+    padding: 10,
+    marginRight:15,
+    borderRadius: 5,
+},
+logoutButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+},
   profilePicture: {
-    width: 85,
-    height: 85, 
-    borderRadius: 50,
+    width: 150,
+    height: 150, 
+    borderRadius: 80,
     marginTop: 75,
-    marginLeft: 15
+    marginLeft: 15,
   },
   followerContainer: {
     backgroundColor: 'gray'
@@ -181,50 +284,34 @@ const styles = StyleSheet.create({
   },
   dataYearStatContainer: {
     flexDirection: "row",
-    marginRight: 80,
+    marginRight: 80
   },
   actContainer: {
     flex: 1,
     paddingLeft: 25,
     borderRightWidth: 0.5,
     borderRightColor: 'rgba(128, 128, 128, 0.5)',
-    paddingBottom: 0,
+    paddingBottom: 0
   },
   mileContainer: {
     flex: 1,
     paddingLeft: 25
-    },
+  },
   mile: {
     fontSize: 12.5,
-    fontWeight: "bold",
+    fontWeight: "bold"
   },
   act: {
     fontSize: 12.5,
-    fontWeight: "bold",
+    fontWeight: "bold"
   },
   actNum: {
     fontSize: 55,
-    paddingTop: 0,
+    paddingTop: 0
   },
   mileNum: {
     fontSize: 55
   }, 
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f0f0',
-},
-topHalf: {
-    padding: 16,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-},
-profileHeaderText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-},
   navbar: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -236,40 +323,116 @@ profileHeaderText: {
     shadowRadius: 3.84,
     elevation: 5,
     height: 50,
-},
-navItem: {
+  },
+  navItem: {
     marginHorizontal: 20,
     justifyContent: "center"
-},
-navText: {
+  },
+  navText: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-},
-activeNavText: {
+  },
+  activeNavText: {
     color: '#FFC107',
-},
-activeNavItem: {
+  },
+  activeNavItem: {
     borderBottomWidth: 2,
     borderBottomColor: 'black'
-},
-bottomHalf: {
+  },
+  bottomHalf: {
     flex: 1,
     padding: 16,
-},
-contentText: {
+  },
+  contentText: {
     fontSize: 18,
     marginBottom: 20,
-},
-emptyPicture: {
-  height: 175,
-  width: 200,
-  borderRadius: 50
-},
-contentContainer: {
-  flex: 1,
-  justifyContent: 'center',
-  alignItems: 'center'
-}
-
+  },
+  emptyPicture: {
+    height: 175,
+    width: 200,
+    borderRadius: 50
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+    elevation: 3,
+  },
+  cardImage: {
+    width: '100%',
+    height: 200,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  cardLocation: {
+    fontSize: 14,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  cardDetails: {
+    fontSize: 12,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: '#333',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 16,
+  },
+  contentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contentText: {
+    fontSize: 18,
+    marginBottom: 20,
+  },
+  emptyPicture: {
+    height: 175,
+    width: 200,
+    borderRadius: 50,
+  },
+  imageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+  },
+  imageWrapper: {
+    width: '48%',
+    marginBottom: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
+    elevation: 3,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+  },
 });
