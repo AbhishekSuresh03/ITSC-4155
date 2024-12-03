@@ -106,7 +106,64 @@ export async function getFollowerIds(userId) {
 
 export async function fetchUserById(id) {
     try {
+        console.log(BASE_URL + '/' + id);
         const response = await fetch(`${BASE_URL}/${id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function saveTrail(userId, trailId) {
+    try {
+        console.log(BASE_URL + '/' + userId + '/save/' + trailId);
+        const response = await fetch(`${BASE_URL}/${userId}/save/${trailId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function unsaveTrail(userId, trailId) {
+    try {
+        console.log(BASE_URL + '/' + userId + '/unsave/' + trailId);
+        const response = await fetch(`${BASE_URL}/${userId}/unsave/${trailId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
+        }
+        return await response.json();
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function getSavedTrails(userId) {
+    try {
+        console.log(BASE_URL + '/' + userId + '/saved-trails');
+        const response = await fetch(`${BASE_URL}/${userId}/saved-trails`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',

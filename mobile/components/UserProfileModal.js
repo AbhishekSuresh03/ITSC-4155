@@ -110,6 +110,8 @@ export default function UserProfileModal({ visible, onClose, userId }) {
 
   if (!user) return null;
 
+  const isOwnProfile = userId === loggedInUser.id;
+
   return (
     <Modal
       animationType="slide"
@@ -127,11 +129,13 @@ export default function UserProfileModal({ visible, onClose, userId }) {
               <Text style={styles.userName}>{user.username}</Text>
               <Text style={styles.fullName}>{user.firstName} {user.lastName}</Text>
               <Text style={styles.location}>{user.city}, {user.state}</Text>
-              {isFollowing ? (
-                <Button title="Unfollow" onPress={handleUnfollow} />
-              ) : (
-                <Button title="Follow" onPress={handleFollow} />
-              )}
+              {!isOwnProfile && (
+                isFollowing ? (
+                    <Button title="Unfollow" onPress={handleUnfollow} />
+                ) : (
+                    <Button title="Follow" onPress={handleFollow} />
+                )
+               )}
             </View>
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
@@ -316,5 +320,8 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 10,
+  },
+  grayText: {
+    color: 'gray',
   },
 });
