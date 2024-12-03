@@ -1,14 +1,54 @@
-import React from 'react';
-import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useRef, useEffect, useContext, useState } from 'react';
+import { Modal, View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, Button } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { formatDate, formatTime, formatPace } from '../utils/formattingUtil';
+import MapView, { Polyline } from 'react-native-maps';
+import { smoothCoordinates } from '../utils/locationUtil';
+import { AuthContext } from '../context/AuthContext';
+import { saveTrail, unsaveTrail, getSavedTrails } from '../service/userService';
 
 const defaultImage = require('../assets/icon.png');
 const defaultProfilePic = require('../assets/default-user-profile-pic.jpg');
 
 export default function TrailDetailModal({ visible, onClose, trail }) {
-  if (!trail) return null;
+  
+  const mapRef = useRef(null);
+  const { user } = useContext(AuthContext);
+  const [isSaved, setIsSaved] = useState(false);
 
+  useEffect(() => {
+    if (user && trail) {
+      checkIfSaved();
+    }
+  }, [user, trail]);
+
+  const checkIfSaved = async () => {
+    try {
+      const savedTrails = await getSavedTrails(user.id);
+      setIsSaved(savedTrails.includes(trail.id));
+    } catch (error) {
+      console.error('Error checking if trail is saved:', error.message);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await saveTrail(user.id, trail.id);
+      setIsSaved(true);
+    } catch (error) {
+      console.error('Error saving trail:', error.message);
+    }
+  };
+
+  const handleUnsave = async () => {
+    try {
+      await unsaveTrail(user.id, trail.id);
+      setIsSaved(false);
+    } catch (error) {
+      console.error('Error unsaving trail:', error.message);
+    }
+  };
+  if (!trail) return null;
   return (
     <Modal
       animationType="slide"
@@ -32,6 +72,15 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
               <View style={styles.ratingContainer}>
                 <Icon name="star" type="font-awesome" color="#f50" size={28} />
                 <Text style={styles.trailRating}>{trail.rating}</Text>
+                <TouchableOpacity onPress={isSaved ? handleUnsave : handleSave}>
+                  <Icon
+                    name={isSaved ? "bookmark" : "bookmark-o"}
+                    type="font-awesome"
+                    color={isSaved ? "#f50" : "gray"}
+                    size={28}
+                    style={styles.bookmarkIcon}
+                  />
+                </TouchableOpacity>
               </View>
               <View style={styles.separator} />
               <View style={styles.infoGrid}>
@@ -44,6 +93,11 @@ export default function TrailDetailModal({ visible, onClose, trail }) {
               <View style={styles.separator} />
             </View>
           </ScrollView>
+          {isSaved ? (
+            <Button title="Unsave Trail" onPress={handleUnsave} />
+          ) : (
+            <Button title="Save Trail" onPress={handleSave} />
+          )}
         </View>
       </View>
     </Modal>
@@ -79,19 +133,20 @@ const styles = StyleSheet.create({
   },
   trailImage: {
     width: '100%',
-    height: 320,
+    height: 230, 
   },
   headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    paddingBottom: 20,
+    paddingVertical: 10, 
+    paddingHorizontal: 10,
   },
   profilePicture: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginLeft: 10,
+    marginRight: 10, 
   },
   userName: {
     fontSize: 18,
@@ -148,5 +203,26 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontWeight: 'bold',
+  },
+  map: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  extraImagesContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  extraImageWrapper: {
+    marginRight: 10,
+  },
+  extraImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  bookmarkIcon: {
+    marginLeft: 10,
   },
 });

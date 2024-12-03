@@ -2,26 +2,38 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { AuthContext } from '../context/AuthContext';
 import { fetchTrailsByUserId } from '../service/trailService';
+import { fetchUserById } from '../service/userService';
+import { formatTime } from '../utils/formattingUtil';
 
 
 export default function ProfileScreen({ navigation }) {
-  const [activeTab, setActiveTab] = useState('Feed');
+  const [activeTab, setActiveTab] = useState('Photos');
   const { user, logout } = useContext(AuthContext); // Access user and logout from AuthContext
   const [trails, setTrails] = useState([]);
   const [totalMiles, setTotalMiles] = useState(0);
   const [trailPictures, setTrailPictures] = useState([]);
+  const [followers , setFollowers] = useState([]);
+  const [following , setFollowing] = useState([]);
 
 
 
-  // -=-=-=-=-==-==-=-=--=-=-=-THIS IS A TEST
-  useEffect(() => { 
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const updatedUser = await fetchUserById(user.id);
+        setFollowers(updatedUser.followers);
+        setFollowing(updatedUser.following);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
     const loadTrails = async () => {
       try {
-
         const fetchedTrails = await fetchTrailsByUserId(user.id);
         console.log('Fetched Trails:', fetchedTrails); // Verify data
         setTrails(fetchedTrails);
-        const pictures = getTrailPictures(trails);
+        const pictures = getTrailPictures(fetchedTrails);
         setTrailPictures(pictures);
         const miles = fetchedTrails.reduce((sum, trail) => sum + (trail.length || 0), 0).toFixed(2); // dont even ask how this works, it just does.
         setTotalMiles(miles);
@@ -29,7 +41,13 @@ export default function ProfileScreen({ navigation }) {
         console.error('Error fetching trails:', error);
       }
     };
-    loadTrails();
+  
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadUserData();
+      loadTrails();
+    });
+  
+    return unsubscribe;
   }, [navigation]);
 
   function getTrailPictures(trails) {
@@ -82,13 +100,6 @@ export default function ProfileScreen({ navigation }) {
             )}
           </ScrollView>
         );
-      case 'Reviews':
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No reviews to currently display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
-        );
       case 'Activities':
         return (
           <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -99,13 +110,13 @@ export default function ProfileScreen({ navigation }) {
               </View>
             ) : (
               trails.map((trail) => (
-                <View key={trail.id} style={styles.card}>
-                  <Image source={{ uri: trail.primaryImage }} style={styles.cardImage} />
-                  <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>{trail.name}</Text>
-                    <Text style={styles.cardLocation}>{trail.city}, {trail.state}</Text>
-                    <Text style={styles.cardDetails}>{trail.difficulty} | {trail.length} | {trail.time}</Text>
-                    <Text style={styles.cardDescription}>
+                <View key={trail.id} style={styles.trailCard}>
+                  <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
+                  <View style={styles.trailInfo}>
+                    <Text style={styles.trailName}>{trail.name}</Text>
+                    <Text style={styles.trailLocation}>{trail.city}, {trail.state}</Text>
+                    <Text style={styles.trailDetails}>{trail.difficulty} | {trail.length.toFixed(2)} Miles | {formatTime(trail.time)}</Text>
+                    <Text style={styles.trailDescription}>
                       {trail.description.length > 100 ? `${trail.description.slice(0, 100)}...` : trail.description}
                     </Text>
                   </View>
@@ -113,13 +124,6 @@ export default function ProfileScreen({ navigation }) {
               ))
             )}
           </ScrollView>
-        );
-      case 'Completed':
-        return (
-          <View style={styles.contentContainer}>
-            <Text style={styles.contentText}>No completed trails to display!</Text>
-            <Image source={require('../assets/emptyProfileNav.png')} style={styles.emptyPicture} />
-          </View>
         );
       default:
         return null;
@@ -150,11 +154,11 @@ export default function ProfileScreen({ navigation }) {
       
       <View style={styles.followContainer}>
         <View style={styles.followers}>
-          <Text style={styles.followerNum}>{user.followers.length}</Text>
+          <Text style={styles.followerNum}>{followers.length}</Text>
           <Text style={styles.followerText}>followers</Text>
         </View>
         <View style={styles.following}>
-          <Text style={styles.followingNum}>{user.following.length}</Text>
+          <Text style={styles.followingNum}>{following.length}</Text>
           <Text style={styles.followingText}>following</Text>
         </View>
       </View>
@@ -174,21 +178,15 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       <ScrollView horizontal={true} style={styles.navbar} showsHorizontalScrollIndicator={false}>
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Feed')}>
-          <Text style={[styles.navText, activeTab === 'Feed' && styles.activeNavText]}>Feed</Text>
-        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Photos')}>
           <Text style={[styles.navText, activeTab === 'Photos' && styles.activeNavText]}>Photos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Reviews')}>
-          <Text style={[styles.navText, activeTab === 'Reviews' && styles.activeNavText]}>Reviews</Text>
-        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Activities')}>
           <Text style={[styles.navText, activeTab === 'Activities' && styles.activeNavText]}>Activities</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => setActiveTab('Completed')}>
-          <Text style={[styles.navText, activeTab === 'Completed' && styles.activeNavText]}>Completed</Text>
-        </TouchableOpacity>
+        
       </ScrollView>
 
       <View style={styles.bottomHalf}>
@@ -434,5 +432,42 @@ logoutButtonText: {
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 2,
+  },
+  trailCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  trailImage: {
+    width: '100%',
+    height: 200,
+  },
+  trailInfo: {
+    padding: 16,
+  },
+  trailName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  trailLocation: {
+    fontSize: 14,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  trailDetails: {
+    fontSize: 12,
+    color: 'gray',
+    marginBottom: 8,
+  },
+  trailDescription: {
+    fontSize: 14,
+    color: '#333',
   },
 });
