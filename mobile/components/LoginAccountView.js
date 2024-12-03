@@ -2,39 +2,39 @@ import React, { useState, useContext } from 'react';
 import { View, TextInput, Button, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { loginUser } from '../service/authService';
 import { AuthContext } from '../context/AuthContext';
-import { sanitizeInput, validateUsername, validatePassword } from '../utils/sanitize.js';
+import { sanitizeInput, validateEmail, validatePassword } from '../utils/sanitize.js';
 
 export default function LoginAccountView({ navigation }) {
   const { login } = useContext(AuthContext); // Access login function from AuthContext
-  const [userName, setUserName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     // Sanitize inputs
-    const sanitizedUserName = sanitizeInput(userName);
-    const sanitizedPassword = sanitizeInput(password);
+    const sanitizedEmail = sanitizeInput(email, 'email');
+    const sanitizedPassword = sanitizeInput(password, 'password');
 
     // Validate inputs
-    if (!sanitizedUserName || !sanitizedPassword) {
-      Alert.alert('Error', 'Please enter both username and password.');
+    if (!sanitizedEmail || !sanitizedPassword) {
+      Alert.alert('Error', 'Please enter both email and password.');
       return;
     }
 
-    if (!validateUsername(sanitizedUserName)) {
-      Alert.alert('Invalid Username', 'Username should be 3-20 alphanumeric characters.');
+    if (!validateEmail(sanitizedEmail)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
       return;
     }
 
     if (!validatePassword(sanitizedPassword)) {
       Alert.alert(
         'Invalid Password',
-        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, and one number.'
+        'Password should be 8-50 characters, with at least one uppercase letter, one lowercase letter, one number, and one special character.'
       );
       return;
     }
 
     try {
-      const userData = await loginUser(sanitizedUserName, sanitizedPassword); // Call backend to login
+      const userData = await loginUser(sanitizedEmail, sanitizedPassword); // Call backend to login
       login(userData); // Save user data in context and AsyncStorage
       navigation.navigate('Main');
     } catch (error) {
@@ -45,7 +45,15 @@ export default function LoginAccountView({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}> Log In </Text>
+      <Text style={styles.title}>Log In</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={(text) => setEmail(sanitizeInput(text, 'email'))}
+        maxLength={50}
+      />
 
       <TextInput
         style={styles.input}
