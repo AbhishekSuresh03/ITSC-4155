@@ -24,4 +24,5 @@ public class User {
     private List<String> trails;
     private List<String> following;
     private List<String> followers;
+    private List<String> savedTrails;
 }
