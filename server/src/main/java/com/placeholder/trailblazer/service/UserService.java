@@ -181,4 +181,35 @@ public class UserService {
     public boolean checkPassword(String plainPassword, String hashedPassword) {
         return BCrypt.checkpw(plainPassword, hashedPassword);
     }
+
+    public User saveTrail(String userId, String trailId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + userId));
+
+        if (!user.getSavedTrails().contains(trailId)) {
+            user.getSavedTrails().add(trailId);
+            userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    public User unsaveTrail(String userId, String trailId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + userId));
+
+        if (user.getSavedTrails().contains(trailId)) {
+            user.getSavedTrails().remove(trailId);
+            userRepository.save(user);
+        }
+
+        return user;
+    }
+
+    public List<String> getSavedTrails(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User not found with id: " + userId));
+
+        return user.getSavedTrails();
+    }
 }

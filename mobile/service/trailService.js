@@ -1,6 +1,7 @@
 import {
     PRODUCTION_BACKEND_URL,
-    DEVELOPMENT_BACKEND_URL
+    DEVELOPMENT_BACKEND_URL,
+    LOCAL_BACKEND_URL
   } from "@env"; // Import environment variables
 const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/trails`;
 
@@ -48,7 +49,7 @@ export async function fetchTrailsByUserId(userId) {
             },
         });
         const responseText = await response.text();
-        console.log('API Response:', responseText); // Log the raw response text
+        // console.log('API Response:', responseText); // Log the raw response text
         if (!response.ok) {
             throw new Error(responseText);
         }
@@ -86,7 +87,7 @@ export async function fetchTrailsByFollowingUsers(userId) {
             },
         });
         const responseText = await response.text();
-        console.log('API Response:', responseText); // Log the raw response text
+        // console.log('API Response:', responseText); // Log the raw response text
         if (!response.ok) {
             throw new Error(responseText);
         }
