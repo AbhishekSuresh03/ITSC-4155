@@ -1,6 +1,6 @@
 # Trailblazer
 
-Trailblazer is a mobile application that allows users to explore, create, and save trails.
+Trailblazer is a mobile application that lets users create and share real-time trails using live location tracking.
 
 ## Table of Contents
 
@@ -13,10 +13,8 @@ Trailblazer is a mobile application that allows users to explore, create, and sa
 
 ## Features
 
-- User authentication (login, create account)
 - Profile management
-- Explore and follow trails
-- Create and save trails with live location tracking
+- Create and share trails with live location tracking
 - View trail details and user profiles
 
 ## Setup
