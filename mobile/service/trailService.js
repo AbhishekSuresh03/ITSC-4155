@@ -3,7 +3,7 @@ import {
     DEVELOPMENT_BACKEND_URL,
     LOCAL_BACKEND_URL
   } from "@env"; // Import environment variables
-const BASE_URL = `${DEVELOPMENT_BACKEND_URL}/trails`;
+const BASE_URL = `${PRODUCTION_BACKEND_URL}/trails`;
 
 export async function fetchTrails() {
     try {
