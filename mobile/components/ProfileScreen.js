@@ -110,7 +110,7 @@ export default function ProfileScreen({ navigation }) {
               </View>
             ) : (
               trails.map((trail) => (
-                <View key={trail.id} style={styles.trailCard}>
+                <View style={styles.trailCard} key={trail.id}>
                   <Image source={{ uri: trail.primaryImage }} style={styles.trailImage} />
                   <View style={styles.trailInfo}>
                     <Text style={styles.trailName}>{trail.name}</Text>
@@ -304,11 +304,11 @@ logoutButtonText: {
     fontWeight: "bold"
   },
   actNum: {
-    fontSize: 55,
+    fontSize: 40,
     paddingTop: 0
   },
   mileNum: {
-    fontSize: 55
+    fontSize: 40
   }, 
   navbar: {
     flexDirection: 'row',
