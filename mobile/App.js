@@ -11,6 +11,9 @@ import SavedScreen from './components/SavedScreen';
 import CommunityScreen from './components/CommunityScreen';
 import OpeningScreen from './components/OpeningScreen';
 import { AuthProvider } from './context/AuthContext';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+
+
 
 // Creating an instance of a stack navigator for the navigation container
 const Stack = createStackNavigator();
@@ -40,10 +43,37 @@ export default function App() {
 function MainTabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: '#FFC107', // Set active tab color to yellow
-        tabBarInactiveTintColor: 'gray', // Set inactive tab color to gray
-      }}
+      screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#FFC107', // Active tab color
+        tabBarInactiveTintColor: 'gray', // Inactive tab color
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          // Assign icons based on the route name
+          switch (route.name) {
+            case 'Community':
+              iconName = 'people'; // MaterialIcons example
+              break;
+            case 'Explore':
+              iconName = 'explore';
+              break;
+            case 'Start Trail':
+              iconName = 'directions-walk';
+              break;
+            case 'Saved':
+              iconName = 'bookmark';
+              break;
+            case 'Profile':
+              iconName = 'person';
+              break;
+            default:
+              iconName = 'help'; // Fallback icon
+          }
+
+          // Return the appropriate icon
+          return <MaterialIcons name={iconName} size={size} color={color} />;
+        },
+      })}
     >
       <Tab.Screen name="Community" component={CommunityScreen} options={{ title: 'Community' }} />
       <Tab.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
