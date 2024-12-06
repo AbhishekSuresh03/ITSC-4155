@@ -54,8 +54,8 @@ public class TrailService {
 
 
         //calculate pace
-        if(trail.getLength() != null && trail.getTime() != null){
-            double pace = trail.getLength() / trail.getTime();
+        if (trail.getLength() != null && trail.getTime() != null) {
+            double pace = trail.getTime() / trail.getLength();
             trail.setPace(pace);
         }
         trail.setId(UUID.randomUUID().toString().split("-")[0]);
